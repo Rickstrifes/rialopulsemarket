@@ -20,6 +20,7 @@ import {
     parseUsdcAmount,
     USDC_MULTIPLIER
 } from "@/utils/betting";
+import { getErrorMessage } from "@/utils/errorParser";
 
 interface MarketProps {
     market: {
@@ -43,8 +44,8 @@ interface MarketProps {
         account: {
             user: PublicKey;
             market: PublicKey;
-            amount: anchor.BN;
-            isUp: boolean;
+            amountUp: anchor.BN;
+            amountDown: anchor.BN;
             claimed: boolean;
         };
     };
@@ -91,14 +92,18 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     }, [m.pairName]);
 
     // Determine if user won using new void logic
-    // Won if: Market Resolved AND UserBet exists AND (UserBet.isUp == Market.resultUp OR Market.isVoid)
-    // If market is void, everyone can claim (refund)
-    const hasWon = m.resolved && userBet && (m.isVoid || userBet.account.isUp === m.resultUp);
+    // With the new structure: amount_up > 0 means bet UP, amount_down > 0 means bet DOWN
+    const userBetIsUp = userBet ? userBet.account.amountUp.toNumber() > 0 : false;
+    const userBetIsDown = userBet ? userBet.account.amountDown.toNumber() > 0 : false;
+    const userTotalBet = userBet ? (userBet.account.amountUp.toNumber() + userBet.account.amountDown.toNumber()) : 0;
+
+    // Won if: Market Resolved AND UserBet exists AND (User bet direction matches result OR Market.isVoid)
+    const hasWon = m.resolved && userBet && (m.isVoid || (userBetIsUp && m.resultUp) || (userBetIsDown && !m.resultUp));
     const canClaim = hasWon && !userBet.account.claimed;
 
     // Personal Outcome Status
-    const isWinner = m.resolved && userBet && !m.isVoid && userBet.account.isUp === m.resultUp;
-    const isLoser = m.resolved && userBet && !m.isVoid && userBet.account.isUp !== m.resultUp;
+    const isWinner = m.resolved && userBet && !m.isVoid && ((userBetIsUp && m.resultUp) || (userBetIsDown && !m.resultUp));
+    const isLoser = m.resolved && userBet && !m.isVoid && ((userBetIsUp && !m.resultUp) || (userBetIsDown && m.resultUp));
     const isRefund = m.resolved && m.isVoid;
 
     // Timer Logic
@@ -205,7 +210,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             onRefresh();
         } catch (error: any) {
             console.error("Bet error:", error);
-            alert("Error placing bet: " + error.message);
+            alert(getErrorMessage(error));
         } finally {
             setPlacingBet(false);
         }
@@ -245,7 +250,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             onRefresh();
         } catch (error: any) {
             console.error("Claim error:", error);
-            alert("Error claiming: " + error.message);
+            alert(getErrorMessage(error));
         } finally {
             setClaiming(false);
         }
@@ -275,7 +280,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
 
             {userBet && (
                 <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono">
-                    My Bet: <span className="font-sans font-bold">{userBet.account.isUp ? "UP" : "DOWN"}</span> ({userBet.account.amount.toNumber() / 1_000_000} USDC)
+                    My Bet: <span className="font-sans font-bold">{userBetIsUp ? "UP" : "DOWN"}</span> ({(userTotalBet / 1_000_000).toFixed(2)} USDC)
                 </div>
             )}
 
@@ -378,8 +383,8 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                     key={preset}
                                     onClick={() => handlePresetClick(preset)}
                                     className={`flex-1 py-1.5 rounded text-xs font-mono transition-all ${selectedPreset === preset
-                                            ? 'bg-accent/20 text-accent border border-accent/50'
-                                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-gray-300'
+                                        ? 'bg-accent/20 text-accent border border-accent/50'
+                                        : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-gray-300'
                                         }`}
                                 >
                                     {preset} USDC
