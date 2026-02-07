@@ -570,12 +570,12 @@
             "type": "pubkey"
           },
           {
-            "name": "amount",
+            "name": "amount_up",
             "type": "u64"
           },
           {
-            "name": "is_up",
-            "type": "bool"
+            "name": "amount_down",
+            "type": "u64"
           },
           {
             "name": "claimed",
