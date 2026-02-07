@@ -59,6 +59,26 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
+          <footer className="py-4 text-center text-sm text-gray-500 border-t border-gray-800">
+            Made by{" "}
+            <a
+              href="https://x.com/Rickstrife08"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              @Rickstrife08
+            </a>
+            {" "}&{" "}
+            <a
+              href="https://x.com/nurairstalk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              @nurairstalk
+            </a>
+          </footer>
         </WalletContextProvider>
       </body>
     </html>
