@@ -13,6 +13,13 @@ import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 import { formatPythPrice, formatCurrency } from "@/utils/formatting";
 import { getPythId } from "@/utils/pyth";
+import {
+    BET_PRESETS,
+    isValidBetFormat,
+    isValidBetAmount,
+    parseUsdcAmount,
+    USDC_MULTIPLIER
+} from "@/utils/betting";
 
 interface MarketProps {
     market: {
@@ -47,7 +54,8 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const { connection } = useConnection();
     const wallet = useWallet();
 
-    const [betAmount, setBetAmount] = useState<string>("5");
+    const [betAmount, setBetAmount] = useState<string>("");
+    const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
     const [placingBet, setPlacingBet] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [resolving, setResolving] = useState(false);
@@ -115,6 +123,36 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
         return () => clearInterval(interval);
     }, [m.endTime]);
 
+    // Betting input validation
+    const isBetValid = isValidBetAmount(betAmount);
+
+    const handleBetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Only update if the format is valid (allows digits and single decimal)
+        if (isValidBetFormat(value)) {
+            setBetAmount(value);
+            // Clear preset selection if user types a custom amount
+            const numValue = parseFloat(value);
+            if (!BET_PRESETS.includes(numValue as typeof BET_PRESETS[number])) {
+                setSelectedPreset(null);
+            } else {
+                setSelectedPreset(numValue);
+            }
+        }
+    };
+
+    const handleBetKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        // Block invalid characters: -, +, e, E
+        if (['-', '+', 'e', 'E'].includes(e.key)) {
+            e.preventDefault();
+        }
+    };
+
+    const handlePresetClick = (amount: number) => {
+        setBetAmount(amount.toString());
+        setSelectedPreset(amount);
+    };
+
 
     const placeBet = async (isUp: boolean) => {
         if (!wallet.publicKey) {
@@ -122,19 +160,19 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             return;
         }
 
-        const amountVal = parseFloat(betAmount);
-        if (isNaN(amountVal) || amountVal <= 0) {
-            alert("Invalid bet amount");
+        const amount = parseUsdcAmount(betAmount);
+        if (!amount) {
+            alert("Invalid bet amount. Please enter a positive number.");
             return;
         }
+
+        const displayAmount = parseFloat(betAmount);
+        console.log(`Betting ${displayAmount} USDC → ${amount.toString()} units (BN) on ${isUp ? "UP" : "DOWN"}`);
 
         setPlacingBet(true);
         try {
             // @ts-ignore
             const program = getProgram(connection, wallet) as any;
-            const amount = new anchor.BN(amountVal * 1_000_000); // Decimals 6
-
-            console.log(`Betting ${amountVal} USDC (${amount.toString()} units) on ${isUp ? "UP" : "DOWN"}`);
 
             const [userBet] = PublicKey.findProgramAddressSync(
                 [Buffer.from("bet"), market.publicKey.toBuffer(), wallet.publicKey.toBuffer()],
@@ -318,29 +356,50 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 {/* Betting Inputs */}
                 {!isExpired && (
                     <>
+                        {/* Amount Input */}
                         <div className="flex items-center bg-black/40 rounded border border-gray-700 p-1">
                             <span className="text-gray-400 text-xs pl-2">$</span>
                             <input
-                                type="number"
-                                step="0.1"
+                                type="text"
+                                inputMode="decimal"
                                 value={betAmount}
-                                onChange={(e) => setBetAmount(e.target.value)}
+                                onChange={handleBetInputChange}
+                                onKeyDown={handleBetKeyDown}
                                 className="w-full bg-transparent text-right pr-2 text-white outline-none text-sm font-mono"
-                                placeholder="Amount"
+                                placeholder="Enter amount"
                             />
+                            <span className="text-gray-500 text-xs pr-2">USDC</span>
                         </div>
+
+                        {/* Quick Select Presets */}
+                        <div className="flex gap-2">
+                            {BET_PRESETS.map((preset) => (
+                                <button
+                                    key={preset}
+                                    onClick={() => handlePresetClick(preset)}
+                                    className={`flex-1 py-1.5 rounded text-xs font-mono transition-all ${selectedPreset === preset
+                                            ? 'bg-accent/20 text-accent border border-accent/50'
+                                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-gray-300'
+                                        }`}
+                                >
+                                    {preset} USDC
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Bet Buttons */}
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => placeBet(true)}
-                                disabled={isExpired || placingBet}
-                                className="py-2 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 disabled:opacity-50 transition-colors relative"
+                                disabled={isExpired || placingBet || !isBetValid}
+                                className="py-2 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors relative"
                             >
                                 {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET UP"}
                             </button>
                             <button
                                 onClick={() => placeBet(false)}
-                                disabled={isExpired || placingBet}
-                                className="py-2 rounded bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 disabled:opacity-50 transition-colors relative"
+                                disabled={isExpired || placingBet || !isBetValid}
+                                className="py-2 rounded bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors relative"
                             >
                                 {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET DOWN"}
                             </button>
