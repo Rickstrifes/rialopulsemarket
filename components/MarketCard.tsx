@@ -61,6 +61,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const [timeLeft, setTimeLeft] = useState<string>("");
     const [resolving, setResolving] = useState(false);
     const [claiming, setClaiming] = useState(false);
+    const [localClaimed, setLocalClaimed] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
     const m = market.account;
@@ -91,15 +92,15 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
         return () => clearInterval(interval);
     }, [m.pairName]);
 
-    // Determine if user won using new void logic
-    // With the new structure: amount_up > 0 means bet UP, amount_down > 0 means bet DOWN
+    // Determine if user won using void logic
+    // With amountUp/amountDown: amountUp > 0 means bet UP, amountDown > 0 means bet DOWN
     const userBetIsUp = userBet ? userBet.account.amountUp.toNumber() > 0 : false;
     const userBetIsDown = userBet ? userBet.account.amountDown.toNumber() > 0 : false;
     const userTotalBet = userBet ? (userBet.account.amountUp.toNumber() + userBet.account.amountDown.toNumber()) : 0;
 
     // Won if: Market Resolved AND UserBet exists AND (User bet direction matches result OR Market.isVoid)
     const hasWon = m.resolved && userBet && (m.isVoid || (userBetIsUp && m.resultUp) || (userBetIsDown && !m.resultUp));
-    const canClaim = hasWon && !userBet.account.claimed;
+    const canClaim = hasWon && !userBet.account.claimed && !localClaimed;
 
     // Personal Outcome Status
     const isWinner = m.resolved && userBet && !m.isVoid && ((userBetIsUp && m.resultUp) || (userBetIsDown && !m.resultUp));
@@ -196,9 +197,9 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 isUp
             ).accounts({
                 market: market.publicKey,
-                userBet,
-                vaultTokenAccount,
-                userTokenAccount,
+                userBet: userBet,
+                vaultTokenAccount: vaultTokenAccount,
+                userTokenAccount: userTokenAccount,
                 user: wallet.publicKey,
                 systemProgram: SystemProgram.programId,
                 tokenProgram: TOKEN_PROGRAM_ID,
@@ -238,8 +239,8 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 .accounts({
                     market: market.publicKey,
                     userBet: userBet.publicKey,
-                    vaultTokenAccount,
-                    userTokenAccount,
+                    vaultTokenAccount: vaultTokenAccount,
+                    userTokenAccount: userTokenAccount,
                     user: wallet.publicKey,
                     tokenProgram: TOKEN_PROGRAM_ID,
                 })
@@ -247,10 +248,20 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
 
             console.log("Claimed:", tx);
             alert(m.isVoid ? "Refund Claimed!" : "Winnings Claimed!");
+            setLocalClaimed(true); // Optimistic update
             onRefresh();
         } catch (error: any) {
             console.error("Claim error:", error);
-            alert(getErrorMessage(error));
+            const errMsg = getErrorMessage(error);
+
+            if (errMsg.includes("AlreadyClaimed") || errMsg.includes("6006") || JSON.stringify(error).includes("6006")) {
+                alert("You have already claimed this reward.");
+                setLocalClaimed(true); // Disable button immediately
+                // Force refresh to update state
+                onRefresh();
+            } else {
+                alert(errMsg);
+            }
         } finally {
             setClaiming(false);
         }
@@ -426,7 +437,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     </button>
                 )}
 
-                {hasWon && userBet.account.claimed && (
+                {(hasWon && (userBet.account.claimed || localClaimed)) && (
                     <div className="text-center text-xs text-green-500 font-mono border border-green-500/20 bg-green-500/5 py-2 rounded">
                         {m.isVoid ? "Refund Claimed" : "Winnings Claimed"}
                     </div>

@@ -63,10 +63,10 @@ export default function Faucet() {
 
             const tx = await program.methods.claimFaucet()
                 .accounts({
-                    faucetState,
+                    faucetState: faucetState,
                     tokenMint: USDC_MINT,
-                    mintAuthority,
-                    userTokenAccount,
+                    mintAuthority: mintAuthority,
+                    userTokenAccount: userTokenAccount,
                     user: wallet.publicKey,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID,

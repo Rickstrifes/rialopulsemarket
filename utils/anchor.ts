@@ -1,18 +1,16 @@
-import { Program, AnchorProvider, Idl, setProvider } from "@coral-xyz/anchor";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Program, AnchorProvider, setProvider } from "@coral-xyz/anchor";
+import { Connection } from "@solana/web3.js";
 import { AnchorWallet } from "@solana/wallet-adapter-react";
-import { PROGRAM_ID } from "./constants";
 import idl from "./idl.json";
 
+// For Anchor 0.32+, the IDL contains the program address directly
 export const getProgram = (connection: Connection, wallet: AnchorWallet) => {
     const provider = new AnchorProvider(connection, wallet, {
         commitment: "confirmed",
     });
     setProvider(provider);
 
-    // Anchor might expect the IDL to be passed differently or IDL format is not perfectly matching Idl type
-    // We cast to any to suppress TS error, but the runtime error suggests structure might be issue
-    // Ensure we are passing the JSON object.
+    // Anchor 0.32+ IDL format includes address directly, no need to pass PROGRAM_ID separately
     return new Program(idl as any, provider);
 };
 

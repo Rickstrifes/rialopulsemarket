@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { getProgram } from "@/utils/anchor";
+import { PROGRAM_ID } from "@/utils/constants";
+import { fetchUserBetsWithLegacySupport, NormalizedUserBet } from "@/utils/legacyUserBetDecoder";
 import * as anchor from "@coral-xyz/anchor";
 
 import MarketCard from "./MarketCard";
@@ -31,7 +33,7 @@ export default function MarketList() {
     const { connection } = useConnection();
     const wallet = useWallet();
     const [markets, setMarkets] = useState<MarketAccount[]>([]);
-    const [userBets, setUserBets] = useState<any[]>([]);
+    const [userBets, setUserBets] = useState<NormalizedUserBet[]>([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>("active");
 
@@ -44,34 +46,43 @@ export default function MarketList() {
 
         if (markets.length === 0) setLoading(true);
 
-        try {
-            // @ts-ignore
-            const program = getProgram(connection, wallet) as any;
+        // @ts-ignore
+        const program = getProgram(connection, wallet) as any;
 
-            // Fetch Markets
+        // Fetch Markets with error handling for old data
+        try {
             const marketAccounts = await program.account.marketState.all();
             setMarkets(marketAccounts);
+        } catch (error) {
+            console.error("Error fetching markets (may be old incompatible data):", error);
+            // Keep existing markets if any, or set empty
+            if (markets.length === 0) setMarkets([]);
+        }
 
-            // Fetch User Bets (Only if wallet connected)
-            if (wallet.publicKey) {
-                const userBetAccounts = await program.account.userBet.all([
-                    {
-                        memcmp: {
-                            offset: 8,
-                            bytes: wallet.publicKey.toBase58(),
-                        },
-                    },
-                ]);
+        // Fetch User Bets using legacy-compatible decoder (handles old + new formats)
+        if (wallet.publicKey) {
+            try {
+                const userBetAccounts = await fetchUserBetsWithLegacySupport(
+                    connection,
+                    PROGRAM_ID,
+                    wallet.publicKey
+                );
                 setUserBets(userBetAccounts);
-            } else {
+
+                // Log legacy accounts for visibility
+                const legacyCount = userBetAccounts.filter(b => b.account.isLegacy).length;
+                if (legacyCount > 0) {
+                    console.log(`Found ${legacyCount} legacy UserBet account(s) with old format`);
+                }
+            } catch (error) {
+                console.error("Error fetching user bets:", error);
                 setUserBets([]);
             }
-
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false);
+        } else {
+            setUserBets([]);
         }
+
+        setLoading(false);
     };
 
     useEffect(() => {
@@ -113,8 +124,8 @@ export default function MarketList() {
                 <button
                     onClick={() => setActiveTab("active")}
                     className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "active"
-                            ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                            : "text-gray-500 hover:text-gray-300"
+                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                        : "text-gray-500 hover:text-gray-300"
                         }`}
                 >
                     Active Markets
@@ -122,8 +133,8 @@ export default function MarketList() {
                 <button
                     onClick={() => setActiveTab("positions")}
                     className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "positions"
-                            ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                            : "text-gray-500 hover:text-gray-300"
+                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                        : "text-gray-500 hover:text-gray-300"
                         }`}
                 >
                     My Positions
@@ -136,8 +147,8 @@ export default function MarketList() {
                 <button
                     onClick={() => setActiveTab("history")}
                     className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "history"
-                            ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                            : "text-gray-500 hover:text-gray-300"
+                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                        : "text-gray-500 hover:text-gray-300"
                         }`}
                 >
                     Resolved History

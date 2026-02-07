@@ -122,9 +122,8 @@ export default function CreateMarket() {
                 .accounts({
                     market: marketKeypair.publicKey,
                     tokenMint: USDC_MINT,
-                    vaultTokenAccount,
+                    vaultTokenAccount: vaultTokenAccount,
                     signer: wallet.publicKey,
-                    priceFeed: ORACLE_PUBKEY,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID,
                     rent: SYSVAR_RENT_PUBKEY,
