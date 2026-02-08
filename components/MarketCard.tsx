@@ -10,6 +10,7 @@ import * as anchor from "@coral-xyz/anchor";
 
 
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { Check, Trophy } from "lucide-react";
 
 import { formatPythPrice, formatCurrency } from "@/utils/formatting";
 import { getPythId } from "@/utils/pyth";
@@ -26,6 +27,7 @@ import { showBetSuccessToast, notify } from "@/utils/notifications";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupText, InputGroupInput } from "@/components/ui/input-group";
 import { Badge } from "@/components/ui/badge";
 
 interface MarketProps {
@@ -303,29 +305,41 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             )}
 
             {m.resolved && (
-                <Badge 
-                    variant="outline" 
-                    className={`absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l z-10 ${m.isVoid ? 'bg-gray-500/20 text-gray-400 border-gray-500/20' :
-                    m.resultUp ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-red-500/20 text-red-400 border-red-500/20'
-                    }`}
-                >
-                    {m.isVoid ? "VOIDED - NO OPPONENT" : `Winner: ${m.resultUp ? "UP" : "DOWN"}`}
-                </Badge>
+                <div className={`absolute top-0 right-0 px-3 py-1 font-bold font-mono text-xs uppercase tracking-wider flex items-center gap-1 z-20 shadow-lg ${
+                    m.isVoid 
+                        ? 'bg-gray-800 text-gray-400 border-b border-l border-gray-700 rounded-bl-xl' 
+                        : m.resultUp 
+                            ? 'bg-retro-green text-black border-b border-l border-retro-green shadow-[0_0_15px_rgba(34,197,94,0.4)] rounded-bl-xl' 
+                            : 'bg-retro-red text-white border-b border-l border-retro-red shadow-[0_0_15px_rgba(239,68,68,0.4)] rounded-bl-xl'
+                }`}>
+                    {!m.isVoid && <Trophy className="w-3 h-3" />}
+                    {m.isVoid ? "VOIDED" : `${m.resultUp ? "UP" : "DOWN"} WINS`}
+                </div>
             )}
 
             {userBet && (
-                <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono flex gap-2 z-10">
+                <div className={`absolute top-0 left-0 text-xs px-2 py-1 rounded-br-lg border-b border-r font-mono flex gap-2 z-10 ${
+                    userBetIsUp && !userBetIsDown
+                        ? 'bg-retro-green/20 text-retro-green border-retro-green/20'
+                        : userBetIsDown && !userBetIsUp
+                        ? 'bg-retro-red/20 text-retro-red border-retro-red/20'
+                        : 'bg-primary/10 border-primary/20 text-gray-300' 
+                }`}>
                     {userBetIsUp && (
                         <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                            UP: ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
+                            <span className="w-2 h-2 rounded-full bg-retro-green"></span>
+                            <span className={userBetIsUp && userBetIsDown ? "text-retro-green font-bold" : ""}>
+                                UP: ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
+                            </span>
                         </span>
                     )}
-                    {userBetIsUp && userBetIsDown && <span className="text-gray-500">|</span>}
+                    {userBetIsUp && userBetIsDown && <span className="text-gray-600">|</span>}
                     {userBetIsDown && (
                         <span className="flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                            DOWN: ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
+                            <span className="w-2 h-2 rounded-full bg-retro-red"></span>
+                            <span className={userBetIsUp && userBetIsDown ? "text-retro-red font-bold" : ""}>
+                                DOWN: ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
+                            </span>
                         </span>
                     )}
                 </div>
@@ -341,7 +355,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                              #{market.publicKey.toString().slice(0, 4)}...{market.publicKey.toString().slice(-4)}
                         </span>
                     </div>
-                     <Badge variant={isExpired ? "secondary" : "default"} className={`${isExpired ? 'bg-gray-500/20 text-gray-400 border-none' : 'bg-green-500/20 text-green-400 border-none'}`}>
+                     <Badge variant={isExpired ? "secondary" : "default"} className={`${isExpired ? 'bg-gray-500/20 text-gray-400 border-none' : 'bg-retro-green/20 text-retro-green border-none'}`}>
                         {isExpired ? (m.resolved ? 'FINISHED' : 'ENDED') : timeLeft}
                     </Badge>
                 </div>
@@ -359,7 +373,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     {!isExpired && (
                         <div className="text-center">
                             <div className="text-gray-500">Current Price</div>
-                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-green-400' : 'text-red-400') : 'text-gray-400'}`}>
+                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-retro-green' : 'text-retro-red') : 'text-gray-400'}`}>
                                 {currentPrice ? formatCurrency(currentPrice) : "Loading..."}
                             </div>
                         </div>
@@ -367,7 +381,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     {m.resolved && (
                         <div className="text-center">
                             <div className="text-gray-500">Settlement</div>
-                            <div className={`font-mono ${m.resultUp ? 'text-green-400' : 'text-red-400'}`}>
+                            <div className={`font-mono ${m.resultUp ? 'text-retro-green' : 'text-retro-red'}`}>
                                 {formatPythPrice(m.finalPrice)}
                             </div>
                         </div>
@@ -383,10 +397,10 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                 {/* UP ROW */}
                                 <div className="flex justify-between items-center mb-1">
                                     <div className="flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                        <span className="text-green-400 font-bold">UP</span>
+                                        <span className="w-2 h-2 rounded-full bg-retro-green"></span>
+                                        <span className="text-retro-green font-bold">UP</span>
                                     </div>
-                                    <div className={m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                    <div className={m.resultUp ? "text-retro-green font-bold" : "text-gray-500"}>
                                         ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
                                         {m.resultUp ? " (WON)" : " (LOST)"}
                                     </div>
@@ -394,10 +408,10 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                 {/* DOWN ROW */}
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                        <span className="text-red-400 font-bold">DOWN</span>
+                                        <span className="w-2 h-2 rounded-full bg-retro-red"></span>
+                                        <span className="text-retro-red font-bold">DOWN</span>
                                     </div>
-                                    <div className={!m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                    <div className={!m.resultUp ? "text-retro-green font-bold" : "text-gray-500"}>
                                         ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
                                         {!m.resultUp ? " (WON)" : " (LOST)"}
                                     </div>
@@ -413,12 +427,12 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         ) : (
                              <>
                                 {isWinner && (
-                                    <div className="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
+                                    <div className="w-full py-2 bg-retro-green/20 border border-retro-green text-retro-green text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
                                         You Won
                                     </div>
                                 )}
                                 {isLoser && (
-                                    <div className="w-full py-2 bg-red-500/20 border border-red-500 text-red-400 text-center font-bold tracking-wider rounded uppercase">
+                                    <div className="w-full py-2 bg-retro-red/20 border border-retro-red text-retro-red text-center font-bold tracking-wider rounded uppercase">
                                         You Lost
                                     </div>
                                 )}
@@ -435,11 +449,11 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 <div className="flex justify-between mb-6 text-sm">
                     <div className="text-center">
                         <div className="text-gray-400 mb-1">Pool UP</div>
-                        <div className="text-green-400 font-mono text-lg">${totalUp.toFixed(2)}</div>
+                        <div className="text-retro-green font-mono text-lg">${totalUp.toFixed(2)}</div>
                     </div>
                     <div className="text-center">
                         <div className="text-gray-400 mb-1">Pool DOWN</div>
-                        <div className="text-red-400 font-mono text-lg">${totalDown.toFixed(2)}</div>
+                        <div className="text-retro-red font-mono text-lg">${totalDown.toFixed(2)}</div>
                     </div>
                 </div>
 
@@ -447,29 +461,37 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                      {!isExpired && (
                         <>
                              {/* Amount Input */}
-                            <div className="relative">
-                                <span className="absolute left-3 top-2.5 text-gray-400 text-xs">$</span>
-                                <Input
+                            <InputGroup>
+                                <InputGroupAddon align="inline-start">
+                                    <InputGroupText>$</InputGroupText>
+                                </InputGroupAddon>
+                                <InputGroupInput
                                     type="text"
                                     inputMode="decimal"
                                     value={betAmount}
                                     onChange={handleBetInputChange}
                                     onKeyDown={handleBetKeyDown}
-                                    className="pl-6 pr-12 text-right font-mono bg-black/40 border-gray-700"
+                                    className="text-right font-mono pb-2"
                                     placeholder="Enter amount"
                                 />
-                                <span className="absolute right-3 top-2.5 text-gray-500 text-xs text-muted-foreground">USDC</span>
-                            </div>
+                                <InputGroupAddon align="inline-end">
+                                    <InputGroupText>USDC</InputGroupText>
+                                </InputGroupAddon>
+                            </InputGroup>
 
                             {/* Quick Select Presets */}
                             <div className="flex gap-2">
                                 {BET_PRESETS.map((preset) => (
                                     <Button
                                         key={preset}
-                                        variant={selectedPreset === preset ? "secondary" : "outline"}
+                                        variant="outline"
                                         size="sm"
                                         onClick={() => handlePresetClick(preset)}
-                                        className="flex-1 text-xs font-mono h-8"
+                                        className={`flex-1 text-xs font-mono h-8 border focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer ${
+                                            selectedPreset === preset
+                                                ? "bg-retro-green/20 text-retro-green border-retro-green font-bold shadow-[0_0_10px_rgba(34,197,94,0.2)]"
+                                                : "bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-200"
+                                        }`}
                                     >
                                         {preset} USDC
                                     </Button>
@@ -481,14 +503,14 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                 <Button
                                     onClick={() => placeBet(true)}
                                     disabled={isExpired || placingBet || !isBetValid}
-                                    className="bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
+                                    className="bg-retro-green/10 text-retro-green border border-retro-green/30 hover:bg-retro-green/20 cursor-pointer"
                                 >
                                      {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET UP"}
                                 </Button>
                                 <Button
                                     onClick={() => placeBet(false)}
                                     disabled={isExpired || placingBet || !isBetValid}
-                                    className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                                    className="bg-retro-red/10 text-retro-red border border-retro-red/30 hover:bg-retro-red/20 cursor-pointer"
                                 >
                                     {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET DOWN"}
                                 </Button>
@@ -500,22 +522,40 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         <Button
                             onClick={claimWinnings}
                             disabled={claiming}
-                            className="w-full bg-green-500 text-black font-bold shadow-lg shadow-green-500/20 hover:scale-105 transition-all text-sm animate-bounce-subtle hover:bg-green-400"
+                            className="w-full bg-retro-green text-black font-bold shadow-lg shadow-retro-green/20 hover:scale-105 transition-all text-sm animate-bounce-subtle hover:bg-retro-green cursor-pointer"
                         >
                             {claiming ? "Claiming..." : m.isVoid ? "⚠️ CLAIM REFUND ⚠️" : "💰 CLAIM WINNINGS 💰"}
                         </Button>
                     )}
 
-                    {(hasWon && (userBet.account.claimed || localClaimed)) && (
-                        <Button
-                            disabled
-                            variant="secondary"
-                            className="w-full cursor-not-allowed"
-                        >
-                            <span>✅</span>
-                            {m.isVoid ? "Refund Claimed" : "Winnings Claimed"}
-                        </Button>
-                    )}
+
+                    {(hasWon && (userBet.account.claimed || localClaimed)) && (() => {
+                        if (m.isVoid) {
+                            return (
+                                <Button
+                                    disabled
+                                    className="w-full bg-gray-900 border border-gray-800 text-gray-400 cursor-not-allowed hover:bg-gray-900"
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    Refund Claimed
+                                </Button>
+                            );
+                        }
+                        
+                        const totalBetUSDC = userTotalBet / 1_000_000;
+                        const profit = estimatedPayout - totalBetUSDC;
+                        const profitPercentage = totalBetUSDC > 0 ? ((profit / totalBetUSDC) * 100) : 0;
+                        
+                        return (
+                            <Button
+                                disabled
+                                className="w-full bg-gray-900 border border-gray-800 text-gray-400 cursor-not-allowed hover:bg-gray-900"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                Claimed ${estimatedPayout.toFixed(2)} (Profit: +${profit.toFixed(2)}, +{profitPercentage.toFixed(1)}%)
+                            </Button>
+                        );
+                    })()}
                 </div>
             </CardContent>
         </Card>

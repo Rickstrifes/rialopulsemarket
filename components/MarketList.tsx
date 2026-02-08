@@ -199,8 +199,8 @@ export default function MarketList() {
                                         else if (lostUp && lostDown) outcome = "LOST (Both)";
                                         else if (lostUp || lostDown) outcome = "LOST";
 
-                                        if (outcome.includes("WON")) outcomeColor = "text-green-500 font-bold";
-                                        else if (outcome.includes("LOST")) outcomeColor = "text-red-500";
+                                        if (outcome.includes("WON")) outcomeColor = "text-retro-green font-bold";
+                                        else if (outcome.includes("LOST")) outcomeColor = "text-retro-red";
                                     }
                                 }
 
@@ -213,16 +213,16 @@ export default function MarketList() {
                                             {ma.isVoid ? (
                                                 <span className="px-2 py-1 rounded bg-gray-800 text-gray-400 text-xs">VOID</span>
                                             ) : ma.resultUp ? (
-                                                <span className="px-2 py-1 rounded bg-green-500/20 text-green-400 text-xs">UP</span>
+                                                <span className="px-2 py-1 rounded bg-retro-green/20 text-retro-green text-xs">UP</span>
                                             ) : (
-                                                <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs">DOWN</span>
+                                                <span className="px-2 py-1 rounded bg-retro-red/20 text-retro-red text-xs">DOWN</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 font-mono">
                                             {myBet ? (
                                                 <div className="flex flex-col gap-1">
-                                                    {upAmount > 0 && <span className="text-green-400">UP: ${upAmount.toFixed(2)}</span>}
-                                                    {downAmount > 0 && <span className="text-red-400">DOWN: ${downAmount.toFixed(2)}</span>}
+                                                    {upAmount > 0 && <span className="text-retro-green">UP: ${upAmount.toFixed(2)}</span>}
+                                                    {downAmount > 0 && <span className="text-retro-red">DOWN: ${downAmount.toFixed(2)}</span>}
                                                 </div>
                                             ) : (
                                                 <span className="text-gray-600">-</span>
@@ -232,7 +232,7 @@ export default function MarketList() {
                                         <td className="px-6 py-4 text-right">
                                             {myBet ? (
                                                 claimed ? (
-                                                    <span className="text-green-500 text-xs border border-green-500/30 px-2 py-1 rounded">Claimed</span>
+                                                    <span className="text-retro-green text-xs border border-retro-green/30 px-2 py-1 rounded">Claimed</span>
                                                 ) : outcome.includes("WON") || outcome === "Refunded" ? (
                                                     <span className="text-yellow-500 text-xs animate-pulse">Unclaimed</span>
                                                 ) : (

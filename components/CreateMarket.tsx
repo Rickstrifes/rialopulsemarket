@@ -25,6 +25,7 @@ export default function CreateMarket() {
     const wallet = useWallet();
     const [loading, setLoading] = useState(false);
     const [selectedPair, setSelectedPair] = useState(ASSET_PAIRS[0]);
+    const [selectedPreset, setSelectedPreset] = useState<number | null>(60); // Default to 1h
 
     // Default to 1 hour from now
     const [selectedDate, setSelectedDate] = useState<Date>(new Date(Date.now() + 60 * 60 * 1000));
@@ -77,6 +78,7 @@ export default function CreateMarket() {
 
     const handlePreset = (minutes: number) => {
         setSelectedDate(new Date(Date.now() + minutes * 60 * 1000));
+        setSelectedPreset(minutes);
     };
 
     const createMarket = async () => {
@@ -197,7 +199,7 @@ export default function CreateMarket() {
                                 <span className="text-xs text-yellow-500 animate-pulse ml-auto">Scanning...</span>
                             ) : (
                                 <div className="flex flex-col items-end">
-                                    <span className={`text-lg font-mono tabular-nums font-bold ${previewPrice ? 'text-green-400' : 'text-gray-500'}`}>
+                                    <span className={`text-lg font-mono tabular-nums font-bold ${previewPrice ? 'text-retro-green' : 'text-gray-500'}`}>
                                         {formatCurrency(previewPrice)}
                                     </span>
                                     <span className="text-[10px] text-gray-600 uppercase tracking-wider">LIVE DATA</span>
@@ -212,7 +214,12 @@ export default function CreateMarket() {
                             <div className="w-full relative">
                                 <DatePicker
                                     selected={selectedDate}
-                                    onChange={(date: Date | null) => date && setSelectedDate(date)}
+                                    onChange={(date: Date | null) => {
+                                        if (date) {
+                                            setSelectedDate(date);
+                                            setSelectedPreset(null);
+                                        }
+                                    }}
                                     showTimeSelect
                                     timeFormat="HH:mm"
                                     timeIntervals={15}
@@ -246,10 +253,12 @@ export default function CreateMarket() {
                             ].map((preset) => (
                                 <Button
                                     key={preset.label}
-                                    variant="outline"
+                                    variant={selectedPreset === preset.val ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => handlePreset(preset.val)}
-                                    className="bg-gray-800 hover:bg-gray-700 hover:text-white text-gray-400 border-gray-700 h-8 text-xs"
+                                    className={`h-8 text-xs border cursor-pointer ${selectedPreset === preset.val 
+                                        ? "bg-retro-green text-black border-retro-green hover:bg-retro-green/90 font-bold" 
+                                        : "bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-white"}`}
                                 >
                                     {preset.label}
                                 </Button>
@@ -261,7 +270,7 @@ export default function CreateMarket() {
                             <span className="text-gray-400">Duration Breakdown:</span>
                             <div className="text-right">
                                 <div className="text-gray-500 mb-1">Closes in:</div>
-                                <div className={`font-mono font-bold ${selectedDate <= new Date() ? 'text-red-400' : 'text-secondary'}`}>
+                                <div className={`font-mono font-bold ${selectedDate <= new Date() ? 'text-retro-red' : 'text-secondary'}`}>
                                     {selectedDate <= new Date() ? "Invalid Time" : countdown}
                                 </div>
                             </div>
@@ -271,7 +280,7 @@ export default function CreateMarket() {
                     <Button
                         onClick={createMarket}
                         disabled={!wallet.publicKey || loading || !previewPrice}
-                        className="w-full font-bold mt-4"
+                        className="w-full font-bold mt-4 cursor-pointer"
                         variant="secondary"
                         size="lg"
                     >

@@ -49,9 +49,7 @@ export default function Navbar() {
 
     return (
         <>
-        <div className="p-0">
-            <LivePriceTicker />
-        </div>
+        
         <nav className="flex justify-between items-center p-4 border-b border-primary/20 backdrop-blur-md sticky top-0 z-50 bg-black/20 h-20">
             <div className="flex items-center gap-4 w-1/3">
                 <div className="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent neon-text shrink-0">
@@ -61,13 +59,14 @@ export default function Navbar() {
             </div>
 
             {/* Center: Tagline */}
-           
+           <div className="max-w-5xl my-2 mx-auto px-4">
+            <LivePriceTicker />
+        </div>
 
             <div className="flex items-center space-x-4">
                 <div className="hidden md:block">
                     <Faucet />
                 </div>
-
                 {publicKey && (
                     <div className="hidden md:flex flex-col items-end text-sm">
                         <span className="text-gray-400 text-[10px] uppercase">Balance</span>

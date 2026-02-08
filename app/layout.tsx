@@ -65,7 +65,7 @@ export default function RootLayout({
               href="https://x.com/Rickstrife08"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-primary hover:text-primary/80 transition-colors"
             >
               @Rickstrife08
             </a>
@@ -74,7 +74,7 @@ export default function RootLayout({
               href="https://x.com/nurairstalk"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
+              className="text-primary hover:text-primary/80 transition-colors"
             >
               @nurairstalk
             </a>
