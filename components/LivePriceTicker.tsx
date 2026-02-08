@@ -47,12 +47,12 @@ export default function LivePriceTicker() {
     if (loading) return <div className="text-gray-500 text-xs animate-pulse">Loading Market Data...</div>;
 
     return (
-        <div className="w-[300px] md:w-[500px] overflow-hidden relative bg-black/40 border border-white/10 rounded-full backdrop-blur-md h-10 flex items-center">
+        <div className="md:w-full overflow-hidden relative bg-black/40 border border-white/10 backdrop-blur-md p-2 flex items-center">
             {/* Gradient Masks */}
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/80 to-transparent z-10 pointer-events-none"></div>
             <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/80 to-transparent z-10 pointer-events-none"></div>
 
-            <div className="flex items-center space-x-6 animate-marquee whitespace-nowrap pl-4">
+            <div className="flex items-center space-x-6 animate-marquee whitespace-nowrap">
                 {/* Duplicating array to ensure smooth seamless loop */}
                 {[...ASSET_PAIRS, ...ASSET_PAIRS].map((asset, index) => {
                     const price = prices[asset.name];
@@ -60,7 +60,7 @@ export default function LivePriceTicker() {
                         <div key={`${asset.name}-${index}`} className="flex items-center space-x-2">
                             <span className="text-xs text-gray-400 font-bold">{asset.name.split('/')[0]}</span>
 
-                            <span className="text-sm font-mono tabular-nums font-bold text-green-400">
+                            <span className="text-xs font-mono tabular-nums font-bold text-primary">
                                 {price ? formatCurrency(price) : "---"}
                             </span>
                         </div>

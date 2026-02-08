@@ -1,22 +1,12 @@
 "use client";
 
 import { FC, ReactNode, useMemo } from "react";
-import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { ConnectionProvider } from "@solana/wallet-adapter-react";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
-import {
-    WalletModalProvider,
-} from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl } from "@solana/web3.js";
+import { UnifiedWalletProvider } from "@jup-ag/wallet-adapter";
 import { HELIUS_RPC_URL } from "@/utils/constants";
 
-// Default styles that can be overridden by your app
-import "@solana/wallet-adapter-react-ui/styles.css";
-
 export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
-    // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-    const network = WalletAdapterNetwork.Devnet;
-
     // You can also provide a custom RPC endpoint.
     const endpoint = useMemo(() => HELIUS_RPC_URL, []);
 
@@ -25,16 +15,27 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter(),
         ],
-        [network]
+        []
     );
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>
-                    {children}
-                </WalletModalProvider>
-            </WalletProvider>
+            <UnifiedWalletProvider
+                wallets={wallets}
+                config={{
+                    autoConnect: true,
+                    env: 'devnet',
+                    metadata: {
+                        name: 'Pulse',
+                        description: 'Predict the Future on Solana',
+                        url: 'https://pulse.markets',
+                        iconUrls: ['https://avatars.githubusercontent.com/u/124594214?s=200&v=4'],
+                    },
+                    theme: 'dark',
+                }}
+            >
+                {children}
+            </UnifiedWalletProvider>
         </ConnectionProvider>
     );
 };
