@@ -23,6 +23,11 @@ import {
 import { getErrorMessage } from "@/utils/errorParser";
 import { showBetSuccessToast, notify } from "@/utils/notifications";
 
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
 interface MarketProps {
     market: {
         publicKey: PublicKey;
@@ -240,10 +245,6 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
         }
     };
 
-    // resolveMarket function removed as resolution is handled by off-chain cron job
-
-
-
     const claimWinnings = async () => {
         if (!wallet.publicKey || !userBet) return;
         setClaiming(true);
@@ -293,27 +294,27 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const totalUp = m.totalPoolUp.toNumber() / 1_000_000;
     const totalDown = m.totalPoolDown.toNumber() / 1_000_000;
 
-    // Verify Data from Smart Contract
-
-
     return (
-        <div className="glass-panel rounded-xl p-6 border border-gray-800 hover:border-accent/50 transition-all flex flex-col relative overflow-hidden">
-            {isExpired && !m.resolved && (
-                <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-bl-lg border-b border-l border-blue-500/20 animate-pulse flex items-center gap-1">
-                    <ArrowPathIcon className="w-3 h-3 animate-spin" /> Settling Market...
-                </div>
+        <Card className="glass-panel border-secondary/30 relative overflow-hidden transition-all hover:border-secondary/50">
+             {isExpired && !m.resolved && (
+                <Badge variant="outline" className="absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l bg-blue-500/20 text-blue-400 border-blue-500/20 animate-pulse flex items-center gap-1 z-10">
+                    <ArrowPathIcon className="w-3 h-3 animate-spin" /> Settling...
+                </Badge>
             )}
 
             {m.resolved && (
-                <div className={`absolute top-0 right-0 text-xs px-2 py-1 rounded-bl-lg border-b border-l ${m.isVoid ? 'bg-gray-500/20 text-gray-400 border-gray-500/20' :
+                <Badge 
+                    variant="outline" 
+                    className={`absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l z-10 ${m.isVoid ? 'bg-gray-500/20 text-gray-400 border-gray-500/20' :
                     m.resultUp ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-red-500/20 text-red-400 border-red-500/20'
-                    }`}>
+                    }`}
+                >
                     {m.isVoid ? "VOIDED - NO OPPONENT" : `Winner: ${m.resultUp ? "UP" : "DOWN"}`}
-                </div>
+                </Badge>
             )}
 
             {userBet && (
-                <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono flex gap-2">
+                <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono flex gap-2 z-10">
                     {userBetIsUp && (
                         <span className="flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-green-500"></span>
@@ -330,203 +331,193 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 </div>
             )}
 
-            <div className="flex justify-between items-start mb-4 mt-6">
-                <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                        {m.pairName}
-                    </h3>
-                    <span className="text-[10px] font-mono text-gray-500 bg-gray-900 border border-gray-800 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 transition-opacity cursor-help" title={`Market ID: ${market.publicKey.toString()}`}>
-                        #{market.publicKey.toString().slice(0, 4)}...{market.publicKey.toString().slice(-4)}
-                    </span>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs font-bold ${isExpired ? 'bg-gray-500/20 text-gray-400' : 'bg-green-500/20 text-green-400'}`}>
-                    {isExpired ? (m.resolved ? 'FINISHED' : 'ENDED') : timeLeft}
-                </span>
-            </div>
-
-            {/* Price Display */}
-            <div className="flex justify-between text-xs mb-4 bg-black/20 p-2 rounded border border-gray-800">
-                <div className="text-center">
-                    <div className="text-gray-500">Strike Price</div>
-                    <p className="text-white font-mono">
-                        {formatPythPrice(m.initialPrice)}
-                    </p>
-                </div>
-                {!isExpired && (
-                    <div className="text-center">
-                        <div className="text-gray-500">Current Price</div>
-
-                        <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-green-400' : 'text-red-400') : 'text-gray-400'}`}>
-                            {currentPrice ? formatCurrency(currentPrice) : "Loading..."}
-                        </div>
+            <CardHeader className="mt-6 pb-2">
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                            {m.pairName}
+                        </CardTitle>
+                        <span className="text-[10px] font-mono text-gray-500 bg-gray-900 border border-gray-800 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 transition-opacity cursor-help" title={`Market ID: ${market.publicKey.toString()}`}>
+                             #{market.publicKey.toString().slice(0, 4)}...{market.publicKey.toString().slice(-4)}
+                        </span>
                     </div>
-                )}
-                {m.resolved && (
+                     <Badge variant={isExpired ? "secondary" : "default"} className={`${isExpired ? 'bg-gray-500/20 text-gray-400 border-none' : 'bg-green-500/20 text-green-400 border-none'}`}>
+                        {isExpired ? (m.resolved ? 'FINISHED' : 'ENDED') : timeLeft}
+                    </Badge>
+                </div>
+            </CardHeader>
+            
+            <CardContent>
+                {/* Price Display */}
+                <div className="flex justify-between text-xs mb-4 bg-black/20 p-2 rounded border border-gray-800">
                     <div className="text-center">
-                        <div className="text-gray-500">Settlement</div>
-                        <div className={`font-mono ${m.resultUp ? 'text-green-400' : 'text-red-400'}`}>
-                            {formatPythPrice(m.finalPrice)}
-                        </div>
+                        <div className="text-gray-500">Strike Price</div>
+                        <p className="text-white font-mono">
+                            {formatPythPrice(m.initialPrice)}
+                        </p>
                     </div>
-                )}
-            </div>
-
-            {/* Personal Outcome Banner */}
-            {m.resolved && userBet && (
-                <div className="mb-4">
-                    {/* HEDGED VIEW */}
-                    {isHedged && !m.isVoid ? (
-                        <div className="bg-gray-900/80 rounded-lg p-3 border border-gray-700 text-sm">
-                            <div className="text-gray-400 text-xs mb-2 text-center uppercase tracking-wide">Position Summary</div>
-
-                            {/* UP ROW */}
-                            <div className="flex justify-between items-center mb-1">
-                                <div className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                    <span className="text-green-400 font-bold">UP</span>
-                                </div>
-                                <div className={m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
-                                    ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
-                                    {m.resultUp ? " (WON)" : " (LOST)"}
-                                </div>
-                            </div>
-
-                            {/* DOWN ROW */}
-                            <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    <span className="text-red-400 font-bold">DOWN</span>
-                                </div>
-                                <div className={!m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
-                                    ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
-                                    {!m.resultUp ? " (WON)" : " (LOST)"}
-                                </div>
-                            </div>
-
-                            {/* TOTAL PAYOUT */}
-                            <div className="border-t border-gray-700 pt-2 flex justify-between items-center">
-                                <span className="text-gray-300 font-bold">Total Payout:</span>
-                                <span className="text-yellow-400 font-mono font-bold text-lg">
-                                    ✨ ${estimatedPayout.toFixed(2)}
-                                </span>
+                    {!isExpired && (
+                        <div className="text-center">
+                            <div className="text-gray-500">Current Price</div>
+                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-green-400' : 'text-red-400') : 'text-gray-400'}`}>
+                                {currentPrice ? formatCurrency(currentPrice) : "Loading..."}
                             </div>
                         </div>
-                    ) : (
-                        /* SINGLE SIDE VIEW (Original) */
+                    )}
+                    {m.resolved && (
+                        <div className="text-center">
+                            <div className="text-gray-500">Settlement</div>
+                            <div className={`font-mono ${m.resultUp ? 'text-green-400' : 'text-red-400'}`}>
+                                {formatPythPrice(m.finalPrice)}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Personal Outcome Banner */}
+                 {m.resolved && userBet && (
+                    <div className="mb-4">
+                        {isHedged && !m.isVoid ? (
+                             <div className="bg-gray-900/80 rounded-lg p-3 border border-gray-700 text-sm">
+                                <div className="text-gray-400 text-xs mb-2 text-center uppercase tracking-wide">Position Summary</div>
+                                {/* UP ROW */}
+                                <div className="flex justify-between items-center mb-1">
+                                    <div className="flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                        <span className="text-green-400 font-bold">UP</span>
+                                    </div>
+                                    <div className={m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                        ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
+                                        {m.resultUp ? " (WON)" : " (LOST)"}
+                                    </div>
+                                </div>
+                                {/* DOWN ROW */}
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                        <span className="text-red-400 font-bold">DOWN</span>
+                                    </div>
+                                    <div className={!m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                        ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
+                                        {!m.resultUp ? " (WON)" : " (LOST)"}
+                                    </div>
+                                </div>
+                                {/* TOTAL PAYOUT */}
+                                <div className="border-t border-gray-700 pt-2 flex justify-between items-center">
+                                    <span className="text-gray-300 font-bold">Total Payout:</span>
+                                    <span className="text-yellow-400 font-mono font-bold text-lg">
+                                        ✨ ${estimatedPayout.toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                             <>
+                                {isWinner && (
+                                    <div className="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
+                                        You Won
+                                    </div>
+                                )}
+                                {isLoser && (
+                                    <div className="w-full py-2 bg-red-500/20 border border-red-500 text-red-400 text-center font-bold tracking-wider rounded uppercase">
+                                        You Lost
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {isRefund && (
+                            <div className="w-full py-2 bg-yellow-500/20 border border-yellow-500 text-yellow-400 text-center font-bold tracking-wider rounded uppercase">
+                                Market Refunded
+                            </div>
+                        )}
+                    </div>
+                 )}
+
+                <div className="flex justify-between mb-6 text-sm">
+                    <div className="text-center">
+                        <div className="text-gray-400 mb-1">Pool UP</div>
+                        <div className="text-green-400 font-mono text-lg">${totalUp.toFixed(2)}</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-gray-400 mb-1">Pool DOWN</div>
+                        <div className="text-red-400 font-mono text-lg">${totalDown.toFixed(2)}</div>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                     {!isExpired && (
                         <>
-                            {isWinner && (
-                                <div className="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
-                                    You Won
-                                </div>
-                            )}
-                            {isLoser && (
-                                <div className="w-full py-2 bg-red-500/20 border border-red-500 text-red-400 text-center font-bold tracking-wider rounded uppercase">
-                                    You Lost
-                                </div>
-                            )}
-                        </>
-                    )}
+                             {/* Amount Input */}
+                            <div className="relative">
+                                <span className="absolute left-3 top-2.5 text-gray-400 text-xs">$</span>
+                                <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={betAmount}
+                                    onChange={handleBetInputChange}
+                                    onKeyDown={handleBetKeyDown}
+                                    className="pl-6 pr-12 text-right font-mono bg-black/40 border-gray-700"
+                                    placeholder="Enter amount"
+                                />
+                                <span className="absolute right-3 top-2.5 text-gray-500 text-xs text-muted-foreground">USDC</span>
+                            </div>
 
-                    {isRefund && (
-                        <div className="w-full py-2 bg-yellow-500/20 border border-yellow-500 text-yellow-400 text-center font-bold tracking-wider rounded uppercase">
-                            Market Refunded
-                        </div>
-                    )}
-                </div>
-            )}
+                            {/* Quick Select Presets */}
+                            <div className="flex gap-2">
+                                {BET_PRESETS.map((preset) => (
+                                    <Button
+                                        key={preset}
+                                        variant={selectedPreset === preset ? "secondary" : "outline"}
+                                        size="sm"
+                                        onClick={() => handlePresetClick(preset)}
+                                        className="flex-1 text-xs font-mono h-8"
+                                    >
+                                        {preset} USDC
+                                    </Button>
+                                ))}
+                            </div>
 
-            <div className="flex justify-between mb-6 text-sm">
-                <div className="text-center">
-                    <div className="text-gray-400 mb-1">Pool UP</div>
-                    <div className="text-green-400 font-mono text-lg">${totalUp.toFixed(2)}</div>
-                </div>
-                <div className="text-center">
-                    <div className="text-gray-400 mb-1">Pool DOWN</div>
-                    <div className="text-red-400 font-mono text-lg">${totalDown.toFixed(2)}</div>
-                </div>
-            </div>
-
-            <div className="mt-auto space-y-3">
-                {/* Betting Inputs */}
-                {!isExpired && (
-                    <>
-                        {/* Amount Input */}
-                        <div className="flex items-center bg-black/40 rounded border border-gray-700 p-1">
-                            <span className="text-gray-400 text-xs pl-2">$</span>
-                            <input
-                                type="text"
-                                inputMode="decimal"
-                                value={betAmount}
-                                onChange={handleBetInputChange}
-                                onKeyDown={handleBetKeyDown}
-                                className="w-full bg-transparent text-right pr-2 text-white outline-none text-sm font-mono"
-                                placeholder="Enter amount"
-                            />
-                            <span className="text-gray-500 text-xs pr-2">USDC</span>
-                        </div>
-
-                        {/* Quick Select Presets */}
-                        <div className="flex gap-2">
-                            {BET_PRESETS.map((preset) => (
-                                <button
-                                    key={preset}
-                                    onClick={() => handlePresetClick(preset)}
-                                    className={`flex-1 py-1.5 rounded text-xs font-mono transition-all ${selectedPreset === preset
-                                        ? 'bg-accent/20 text-accent border border-accent/50'
-                                        : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-gray-300'
-                                        }`}
+                             {/* Bet Buttons */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <Button
+                                    onClick={() => placeBet(true)}
+                                    disabled={isExpired || placingBet || !isBetValid}
+                                    className="bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
                                 >
-                                    {preset} USDC
-                                </button>
-                            ))}
-                        </div>
+                                     {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET UP"}
+                                </Button>
+                                <Button
+                                    onClick={() => placeBet(false)}
+                                    disabled={isExpired || placingBet || !isBetValid}
+                                    className="bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                                >
+                                    {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET DOWN"}
+                                </Button>
+                            </div>
+                        </>
+                     )}
 
-                        {/* Bet Buttons */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => placeBet(true)}
-                                disabled={isExpired || placingBet || !isBetValid}
-                                className="py-2 rounded bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors relative"
-                            >
-                                {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET UP"}
-                            </button>
-                            <button
-                                onClick={() => placeBet(false)}
-                                disabled={isExpired || placingBet || !isBetValid}
-                                className="py-2 rounded bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors relative"
-                            >
-                                {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET DOWN"}
-                            </button>
-                        </div>
-                    </>
-                )}
+                     {canClaim && (
+                        <Button
+                            onClick={claimWinnings}
+                            disabled={claiming}
+                            className="w-full bg-green-500 text-black font-bold shadow-lg shadow-green-500/20 hover:scale-105 transition-all text-sm animate-bounce-subtle hover:bg-green-400"
+                        >
+                            {claiming ? "Claiming..." : m.isVoid ? "⚠️ CLAIM REFUND ⚠️" : "💰 CLAIM WINNINGS 💰"}
+                        </Button>
+                    )}
 
-                {/* Resolve Button Removed: Handled by Cron Job */}
-                {/* isExpired && !m.resolved && ( ... ) */}
-
-                {/* Claim Winnings Button */}
-                {/* Logic: Show active claim button ONLY if won, not claimed, and not locally claimed */}
-                {canClaim && (
-                    <button
-                        onClick={claimWinnings}
-                        disabled={claiming}
-                        className="w-full py-2 bg-green-500 text-black font-bold rounded shadow-lg shadow-green-500/20 hover:scale-105 transition-all text-sm animate-bounce-subtle"
-                    >
-                        {claiming ? "Claiming..." : m.isVoid ? "⚠️ CLAIM REFUND ⚠️" : "💰 CLAIM WINNINGS 💰"}
-                    </button>
-                )}
-
-                {/* Show Disabled 'Claimed' Button if definitely claimed */}
-                {(hasWon && (userBet.account.claimed || localClaimed)) && (
-                    <button
-                        disabled
-                        className="w-full py-2 bg-gray-800 text-gray-500 font-bold rounded border border-gray-700 cursor-not-allowed text-sm flex items-center justify-center gap-2"
-                    >
-                        <span>✅</span>
-                        {m.isVoid ? "Refund Claimed" : "Winnings Claimed"}
-                    </button>
-                )}
-            </div>
-        </div>
+                    {(hasWon && (userBet.account.claimed || localClaimed)) && (
+                        <Button
+                            disabled
+                            variant="secondary"
+                            className="w-full cursor-not-allowed"
+                        >
+                            <span>✅</span>
+                            {m.isVoid ? "Refund Claimed" : "Winnings Claimed"}
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     );
 }

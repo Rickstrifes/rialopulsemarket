@@ -7,6 +7,7 @@ import { getProgram } from "@/utils/anchor";
 import { USDC_MINT } from "@/utils/constants";
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor";
+import { Button } from "@/components/ui/button";
 
 import toast from "react-hot-toast";
 
@@ -14,7 +15,6 @@ export default function Faucet() {
     const { connection } = useConnection();
     const wallet = useWallet();
     const [loading, setLoading] = useState(false);
-    // status state removed as it is now handled by toast
 
     const claimFaucet = async () => {
         if (!wallet.publicKey) {
@@ -93,10 +93,11 @@ export default function Faucet() {
 
     return (
         <div className="relative">
-            <button
+            <Button
                 onClick={claimFaucet}
                 disabled={!wallet.publicKey || loading}
-                className="flex items-center gap-2 py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 text-blue-400 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                variant="outline"
+                className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50 text-blue-400 font-bold transition-all whitespace-nowrap"
             >
                 {loading ? (
                     <>
@@ -108,7 +109,7 @@ export default function Faucet() {
                         <span>💧</span> Claim 20 USDC
                     </>
                 )}
-            </button>
+            </Button>
         </div>
     );
 }
