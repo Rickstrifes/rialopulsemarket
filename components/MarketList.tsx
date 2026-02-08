@@ -155,28 +155,123 @@ export default function MarketList() {
                 </button>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMarkets.map((m) => {
-                    const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
-                    return (
-                        <MarketCard
-                            key={m.publicKey.toString()}
-                            market={m}
-                            userBet={myBet}
-                            onRefresh={fetchData}
-                        />
-                    );
-                })}
+            {/* Content Area */}
+            {activeTab === "history" ? (
+                /* History Table View */
+                <div className="overflow-x-auto rounded-xl border border-gray-800 bg-black/20">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-900/50 text-gray-400 uppercase font-mono text-xs">
+                            <tr>
+                                <th className="px-6 py-4">Market Pair</th>
+                                <th className="px-6 py-4">Result</th>
+                                <th className="px-6 py-4">My Bet (UP / DOWN)</th>
+                                <th className="px-6 py-4">Outcome</th>
+                                <th className="px-6 py-4 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800">
+                            {filteredMarkets.map((m) => {
+                                const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
+                                const ma = m.account;
 
-                {filteredMarkets.length === 0 && !loading && (
-                    <div className="col-span-full text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20">
-                        {activeTab === "active" && "No active markets right now."}
-                        {activeTab === "positions" && "You haven't placed any bets yet."}
-                        {activeTab === "history" && "No resolved markets history."}
-                    </div>
-                )}
-            </div>
+                                const upAmount = myBet ? myBet.account.amountUp.toNumber() / 1_000_000 : 0;
+                                const downAmount = myBet ? myBet.account.amountDown.toNumber() / 1_000_000 : 0;
+
+                                const isVoid = ma.isVoid;
+                                const resultUp = ma.resultUp;
+
+                                let outcome = "No Bet";
+                                let outcomeColor = "text-gray-500";
+
+                                if (myBet) {
+                                    if (isVoid) {
+                                        outcome = "Refunded";
+                                        outcomeColor = "text-yellow-500";
+                                    } else {
+                                        const wonUp = upAmount > 0 && resultUp;
+                                        const wonDown = downAmount > 0 && !resultUp;
+                                        const lostUp = upAmount > 0 && !resultUp;
+                                        const lostDown = downAmount > 0 && resultUp;
+
+                                        if (wonUp && wonDown) outcome = "Both Won (Impossible)"; // Should not happen in binary
+                                        else if (wonUp) outcome = "WON (UP)";
+                                        else if (wonDown) outcome = "WON (DOWN)";
+                                        else if (lostUp && lostDown) outcome = "LOST (Both)";
+                                        else if (lostUp || lostDown) outcome = "LOST";
+
+                                        if (outcome.includes("WON")) outcomeColor = "text-green-500 font-bold";
+                                        else if (outcome.includes("LOST")) outcomeColor = "text-red-500";
+                                    }
+                                }
+
+                                const claimed = myBet?.account.claimed;
+
+                                return (
+                                    <tr key={m.publicKey.toString()} className="hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4 font-bold text-white">{ma.pairName}</td>
+                                        <td className="px-6 py-4">
+                                            {ma.isVoid ? (
+                                                <span className="px-2 py-1 rounded bg-gray-800 text-gray-400 text-xs">VOID</span>
+                                            ) : ma.resultUp ? (
+                                                <span className="px-2 py-1 rounded bg-green-500/20 text-green-400 text-xs">UP</span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs">DOWN</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 font-mono">
+                                            {myBet ? (
+                                                <div className="flex flex-col gap-1">
+                                                    {upAmount > 0 && <span className="text-green-400">UP: ${upAmount.toFixed(2)}</span>}
+                                                    {downAmount > 0 && <span className="text-red-400">DOWN: ${downAmount.toFixed(2)}</span>}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-600">-</span>
+                                            )}
+                                        </td>
+                                        <td className={`px-6 py-4 ${outcomeColor}`}>{outcome}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            {myBet ? (
+                                                claimed ? (
+                                                    <span className="text-green-500 text-xs border border-green-500/30 px-2 py-1 rounded">Claimed</span>
+                                                ) : outcome.includes("WON") || outcome === "Refunded" ? (
+                                                    <span className="text-yellow-500 text-xs animate-pulse">Unclaimed</span>
+                                                ) : (
+                                                    <span className="text-gray-600 text-xs">Settled</span>
+                                                )
+                                            ) : (
+                                                <span className="text-gray-600 text-xs">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                /* Grid View (Active & Positions) */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMarkets.map((m) => {
+                        const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
+                        return (
+                            <MarketCard
+                                key={m.publicKey.toString()}
+                                market={m}
+                                userBet={myBet}
+                                onRefresh={fetchData}
+                            />
+                        );
+                    })}
+                </div>
+            )}
+
+            {filteredMarkets.length === 0 && !loading && (
+                <div className="text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
+                    {activeTab === "active" && "No active markets right now."}
+                    {activeTab === "positions" && "You haven't placed any bets yet."}
+                    {activeTab === "history" && "No resolved markets history."}
+                </div>
+            )}
         </div>
     );
 }

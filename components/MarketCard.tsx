@@ -21,6 +21,7 @@ import {
     USDC_MULTIPLIER
 } from "@/utils/betting";
 import { getErrorMessage } from "@/utils/errorParser";
+import { showBetSuccessToast, notify } from "@/utils/notifications";
 
 interface MarketProps {
     market: {
@@ -106,6 +107,28 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const isWinner = m.resolved && userBet && !m.isVoid && ((userBetIsUp && m.resultUp) || (userBetIsDown && !m.resultUp));
     const isLoser = m.resolved && userBet && !m.isVoid && ((userBetIsUp && !m.resultUp) || (userBetIsDown && m.resultUp));
     const isRefund = m.resolved && m.isVoid;
+    const isHedged = userBetIsUp && userBetIsDown;
+
+    // Calculate Estimated Payout for UI
+    const calculateEstimatedPayout = () => {
+        if (!userBet || !m.resolved || m.isVoid) return 0;
+        const upAmt = userBet.account.amountUp.toNumber();
+        const downAmt = userBet.account.amountDown.toNumber();
+        const poolUp = m.totalPoolUp.toNumber();
+        const poolDown = m.totalPoolDown.toNumber();
+
+        let payout = 0;
+        if (m.resultUp && upAmt > 0 && poolUp > 0) {
+            // share = upAmt / poolUp
+            // win = share * poolDown
+            // total = upAmt + win
+            payout = upAmt + (upAmt * poolDown / poolUp);
+        } else if (!m.resultUp && downAmt > 0 && poolDown > 0) {
+            payout = downAmt + (downAmt * poolUp / poolDown);
+        }
+        return payout / 1_000_000;
+    };
+    const estimatedPayout = calculateEstimatedPayout();
 
     // Timer Logic
     useEffect(() => {
@@ -162,13 +185,13 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
 
     const placeBet = async (isUp: boolean) => {
         if (!wallet.publicKey) {
-            alert("Connect wallet first!");
+            notify.error("Connect wallet first!");
             return;
         }
 
         const amount = parseUsdcAmount(betAmount);
         if (!amount) {
-            alert("Invalid bet amount. Please enter a positive number.");
+            notify.error("Invalid bet amount. Please enter a positive number.");
             return;
         }
 
@@ -206,12 +229,12 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             }).rpc();
 
             console.log("Bet placed:", tx);
-            alert(`Bet Placed! Tx: ${tx}`);
+            showBetSuccessToast(tx);
             setBetAmount(""); // Clear input
             onRefresh();
         } catch (error: any) {
             console.error("Bet error:", error);
-            alert(getErrorMessage(error));
+            notify.error(getErrorMessage(error));
         } finally {
             setPlacingBet(false);
         }
@@ -247,7 +270,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 .rpc();
 
             console.log("Claimed:", tx);
-            alert(m.isVoid ? "Refund Claimed!" : "Winnings Claimed!");
+            notify.success(m.isVoid ? "Refund Claimed!" : "Winnings Claimed!");
             setLocalClaimed(true); // Optimistic update
             onRefresh();
         } catch (error: any) {
@@ -255,12 +278,12 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             const errMsg = getErrorMessage(error);
 
             if (errMsg.includes("AlreadyClaimed") || errMsg.includes("6006") || JSON.stringify(error).includes("6006")) {
-                alert("You have already claimed this reward.");
+                notify.error("You have already claimed this reward.");
                 setLocalClaimed(true); // Disable button immediately
                 // Force refresh to update state
                 onRefresh();
             } else {
-                alert(errMsg);
+                notify.error(errMsg);
             }
         } finally {
             setClaiming(false);
@@ -290,8 +313,20 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             )}
 
             {userBet && (
-                <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono">
-                    My Bet: <span className="font-sans font-bold">{userBetIsUp ? "UP" : "DOWN"}</span> ({(userTotalBet / 1_000_000).toFixed(2)} USDC)
+                <div className="absolute top-0 left-0 bg-primary/20 text-primary text-xs px-2 py-1 rounded-br-lg border-b border-r border-primary/20 font-mono flex gap-2">
+                    {userBetIsUp && (
+                        <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            UP: ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
+                        </span>
+                    )}
+                    {userBetIsUp && userBetIsDown && <span className="text-gray-500">|</span>}
+                    {userBetIsDown && (
+                        <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                            DOWN: ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -339,16 +374,59 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             {/* Personal Outcome Banner */}
             {m.resolved && userBet && (
                 <div className="mb-4">
-                    {isWinner && (
-                        <div className="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
-                            You Won
+                    {/* HEDGED VIEW */}
+                    {isHedged && !m.isVoid ? (
+                        <div className="bg-gray-900/80 rounded-lg p-3 border border-gray-700 text-sm">
+                            <div className="text-gray-400 text-xs mb-2 text-center uppercase tracking-wide">Position Summary</div>
+
+                            {/* UP ROW */}
+                            <div className="flex justify-between items-center mb-1">
+                                <div className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                    <span className="text-green-400 font-bold">UP</span>
+                                </div>
+                                <div className={m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                    ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
+                                    {m.resultUp ? " (WON)" : " (LOST)"}
+                                </div>
+                            </div>
+
+                            {/* DOWN ROW */}
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="flex items-center gap-1">
+                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span className="text-red-400 font-bold">DOWN</span>
+                                </div>
+                                <div className={!m.resultUp ? "text-green-400 font-bold" : "text-gray-500"}>
+                                    ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
+                                    {!m.resultUp ? " (WON)" : " (LOST)"}
+                                </div>
+                            </div>
+
+                            {/* TOTAL PAYOUT */}
+                            <div className="border-t border-gray-700 pt-2 flex justify-between items-center">
+                                <span className="text-gray-300 font-bold">Total Payout:</span>
+                                <span className="text-yellow-400 font-mono font-bold text-lg">
+                                    ✨ ${estimatedPayout.toFixed(2)}
+                                </span>
+                            </div>
                         </div>
+                    ) : (
+                        /* SINGLE SIDE VIEW (Original) */
+                        <>
+                            {isWinner && (
+                                <div className="w-full py-2 bg-green-500/20 border border-green-500 text-green-400 text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
+                                    You Won
+                                </div>
+                            )}
+                            {isLoser && (
+                                <div className="w-full py-2 bg-red-500/20 border border-red-500 text-red-400 text-center font-bold tracking-wider rounded uppercase">
+                                    You Lost
+                                </div>
+                            )}
+                        </>
                     )}
-                    {isLoser && (
-                        <div className="w-full py-2 bg-red-500/20 border border-red-500 text-red-400 text-center font-bold tracking-wider rounded uppercase">
-                            You Lost
-                        </div>
-                    )}
+
                     {isRefund && (
                         <div className="w-full py-2 bg-yellow-500/20 border border-yellow-500 text-yellow-400 text-center font-bold tracking-wider rounded uppercase">
                             Market Refunded
@@ -427,6 +505,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 {/* isExpired && !m.resolved && ( ... ) */}
 
                 {/* Claim Winnings Button */}
+                {/* Logic: Show active claim button ONLY if won, not claimed, and not locally claimed */}
                 {canClaim && (
                     <button
                         onClick={claimWinnings}
@@ -437,10 +516,15 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     </button>
                 )}
 
+                {/* Show Disabled 'Claimed' Button if definitely claimed */}
                 {(hasWon && (userBet.account.claimed || localClaimed)) && (
-                    <div className="text-center text-xs text-green-500 font-mono border border-green-500/20 bg-green-500/5 py-2 rounded">
+                    <button
+                        disabled
+                        className="w-full py-2 bg-gray-800 text-gray-500 font-bold rounded border border-gray-700 cursor-not-allowed text-sm flex items-center justify-center gap-2"
+                    >
+                        <span>✅</span>
                         {m.isVoid ? "Refund Claimed" : "Winnings Claimed"}
-                    </div>
+                    </button>
                 )}
             </div>
         </div>
