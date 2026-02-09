@@ -7,12 +7,17 @@ import { USDC_MINT } from "@/utils/constants";
 import { getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
 import { formatCurrency } from "@/utils/formatting";
 import Faucet from "./Faucet";
+import CreateMarket from "./CreateMarket";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export default function Navbar() {
     const { connection } = useConnection();
     const { publicKey } = useWallet();
     const [balance, setBalance] = useState<number | null>(null);
     const [mounted, setMounted] = useState(false);
+    const [createMarketOpen, setCreateMarketOpen] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => setMounted(true), 0);
@@ -61,6 +66,23 @@ export default function Navbar() {
                 <div className="hidden md:block">
                     <Faucet />
                 </div>
+                <Dialog open={createMarketOpen} onOpenChange={setCreateMarketOpen}>
+                    <DialogTrigger asChild>
+                        <Button 
+                            variant="outline"
+                            className="bg-primary/10 hover:bg-primary/20 border-primary/50 text-primary font-bold transition-all"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Market
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl font-bold">Create New Market</DialogTitle>
+                        </DialogHeader>
+                        <CreateMarket onSuccess={() => setCreateMarketOpen(false)} />
+                    </DialogContent>
+                </Dialog>
                 {publicKey && (
                     <div className="hidden md:flex flex-col items-end text-sm">
                         <span className="text-gray-400 text-[10px] uppercase">Balance</span>

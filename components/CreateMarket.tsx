@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
-export default function CreateMarket() {
+export default function CreateMarket({ onSuccess }: { onSuccess?: () => void }) {
     const { connection } = useConnection();
     const wallet = useWallet();
     const [loading, setLoading] = useState(false);
@@ -139,6 +139,7 @@ export default function CreateMarket() {
 
             console.log("Market initialized:", tx);
             toast.success("Market initialized successfully.", { id: toastId });
+            onSuccess?.(); // Call callback if provided
         } catch (error: unknown) {
             console.error("Market creation error:", error);
             const msg = error instanceof Error ? error.message : String(error);
