@@ -193,7 +193,6 @@ body {
 /* Sticky Pagination */
 .sticky-pagination {
   @apply sticky bottom-0 bg-background/95 backdrop-blur-md border-t border-border/50 z-10 p-4;
-<<<<<<< HEAD
 }
 
 /* Glass Toast */
@@ -218,6 +217,3 @@ body {
   background: rgba(239, 68, 68, 0.05) !important;
 }
 .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-=======
-}
->>>>>>> fa284d5be6b84fe32d3fde8b39dbc061c885b16e
