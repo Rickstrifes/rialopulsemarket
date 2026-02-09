@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useConnection, useWallet, AnchorWallet } from "@jup-ag/wallet-adapter";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { getProgram } from "@/utils/anchor";
@@ -10,7 +10,7 @@ import * as anchor from "@coral-xyz/anchor";
 
 
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { Check, Trophy } from "lucide-react";
+import { Check, Trophy, Flame, Clock, ArrowUp, ArrowDown } from "lucide-react";
 
 import { formatPythPrice, formatCurrency } from "@/utils/formatting";
 import { getPythId } from "@/utils/pyth";
@@ -71,6 +71,8 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const [claiming, setClaiming] = useState(false);
     const [localClaimed, setLocalClaimed] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+    const prevPriceRef = useRef<number | null>(null);
+    const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
 
     const m = market.account;
     const isExpired = Date.now() / 1000 > m.endTime.toNumber();
@@ -88,6 +90,15 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                 if (data && data.parsed && data.parsed.length > 0) {
                     const priceData = data.parsed[0].price;
                     const val = parseFloat(priceData.price) * Math.pow(10, priceData.expo);
+                    
+                    if (prevPriceRef.current !== null && val !== prevPriceRef.current) {
+                        if (val > prevPriceRef.current) setPriceDirection('up');
+                        else if (val < prevPriceRef.current) setPriceDirection('down');
+                        
+                        // Reset direction after animation
+                        setTimeout(() => setPriceDirection('neutral'), 2000);
+                    }
+                    prevPriceRef.current = val;
                     setCurrentPrice(val);
                 }
             } catch (e) {
@@ -294,12 +305,31 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const totalUp = m.totalPoolUp.toNumber() / 1_000_000;
     const totalDown = m.totalPoolDown.toNumber() / 1_000_000;
 
+    const isEndingSoon = !isExpired && (m.endTime.toNumber() - Date.now() / 1000 < 3600);
+    const isHot = (totalUp + totalDown) > 500;
+
     return (
-        <Card className="glass-panel border-2 border-secondary/20 relative overflow-hidden transition-all duration-300 hover:border-secondary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
+        <Card className={`glass-panel border-2 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 ${
+            priceDirection === 'up' ? 'border-retro-green/50 shadow-retro-green/10' : 
+            priceDirection === 'down' ? 'border-retro-red/50 shadow-retro-red/10' : 
+            'border-secondary/20 hover:border-secondary/50'
+        }`}>
              {isExpired && !m.resolved && (
                 <Badge variant="outline" className="absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l bg-blue-500/20 text-blue-400 border-blue-500/20 animate-pulse flex items-center gap-1 z-10">
                     <ArrowPathIcon className="w-3 h-3 animate-spin" /> Settling...
                 </Badge>
+            )}
+
+            {!isExpired && isEndingSoon && (
+                <div className="absolute top-0 right-0 px-2 py-0.5 rounded-bl-lg bg-orange-500/20 text-orange-400 border-b border-l border-orange-500/20 flex items-center gap-1 text-[10px] font-bold z-10">
+                    <Clock className="w-3 h-3" /> ENDING SOON
+                </div>
+            )}
+
+            {!isExpired && !isEndingSoon && isHot && (
+                 <div className="absolute top-0 right-0 px-2 py-0.5 rounded-bl-lg bg-retro-red/20 text-retro-red border-b border-l border-retro-red/20 flex items-center gap-1 text-[10px] font-bold z-10">
+                    <Flame className="w-3 h-3" /> HOT
+                </div>
             )}
 
             {m.resolved && (
@@ -372,8 +402,16 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     {!isExpired && (
                         <div className="text-center">
                             <div className="text-muted-foreground">Current Price</div>
-                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-retro-green' : 'text-retro-red') : 'text-muted-foreground'}`}>
-                                {currentPrice ? formatCurrency(currentPrice) : "Loading..."}
+                            <div className={`font-mono flex items-center gap-1 ${
+                                currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-retro-green' : 'text-retro-red') : 'text-muted-foreground'
+                            }`}>
+                                {currentPrice ? (
+                                    <>
+                                        {formatCurrency(currentPrice)}
+                                        {priceDirection === 'up' && <ArrowUp className="w-3 h-3 animate-bounce" />}
+                                        {priceDirection === 'down' && <ArrowDown className="w-3 h-3 animate-bounce" />}
+                                    </>
+                                ) : "Loading..."}
                             </div>
                         </div>
                     )}

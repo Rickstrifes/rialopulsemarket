@@ -13,7 +13,7 @@ import MarketCardSkeleton from "./MarketCardSkeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Activity, TrendingUp, History, Filter, ArrowUpDown, Inbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity, TrendingUp, History, Filter, ArrowUpDown, Inbox, ArrowUp } from "lucide-react";
 
 interface MarketAccount {
     publicKey: PublicKey;
@@ -43,6 +43,10 @@ export default function MarketList() {
     const [historyPage, setHistoryPage] = useState(1);
     const [activePage, setActivePage] = useState(1);
     const [positionsPage, setPositionsPage] = useState(1);
+    const [selectedAsset, setSelectedAsset] = useState<string>("ALL");
+    const [sortOption, setSortOption] = useState<string>("endingSoon");
+    const [showBackToTop, setShowBackToTop] = useState(false);
+
     const ITEMS_PER_PAGE = 10;
     const ACTIVE_ITEMS_PER_PAGE = 6;
 
@@ -96,10 +100,26 @@ export default function MarketList() {
         return () => clearInterval(interval);
     }, [fetchData]);
 
+    // Scroll to Top Logic
+    useEffect(() => {
+        const handleScroll = () => {
+             setShowBackToTop(window.scrollY > 400);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
     // Filtering & Sorting
+    const uniqueAssets = Array.from(new Set(markets.map(m => m.account.pairName))).sort();
+
     const filteredMarkets = markets
         .filter((m) => {
             if (activeTab === "active") {
+                if (selectedAsset !== "ALL" && m.account.pairName !== selectedAsset) return false;
                 return !m.account.resolved;
             }
             if (activeTab === "positions") {
@@ -111,8 +131,48 @@ export default function MarketList() {
             return true;
         })
         .sort((a, b) => {
+            if (activeTab === "active") {
+                if (sortOption === "endingSoon") {
+                    return a.account.endTime.toNumber() - b.account.endTime.toNumber();
+                } else if (sortOption === "liquidity") {
+                    const poolA = a.account.totalPoolUp.add(a.account.totalPoolDown).toNumber();
+                    const poolB = b.account.totalPoolUp.add(b.account.totalPoolDown).toNumber();
+                    return poolB - poolA;
+                } else if (sortOption === "newest") {
+                    // Using furthest end time as proxy for "newest" duration
+                    return b.account.endTime.toNumber() - a.account.endTime.toNumber();
+                }
+            }
+            // Default sort for other tabs (newest/latest first)
             return b.account.endTime.toNumber() - a.account.endTime.toNumber();
         });
+
+    // Keyboard Navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if input/textarea is focused
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes((document.activeElement?.tagName || ''))) return;
+
+            switch (e.key) {
+                case '1': setActiveTab("active"); break;
+                case '2': setActiveTab("positions"); break;
+                case '3': setActiveTab("history"); break;
+                case 'ArrowRight':
+                    if (activeTab === "active") setActivePage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1));
+                    else if (activeTab === "positions") setPositionsPage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1));
+                    else if (activeTab === "history") setHistoryPage(p => Math.min(Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE), p + 1));
+                    break;
+                case 'ArrowLeft':
+                    if (activeTab === "active") setActivePage(p => Math.max(1, p - 1));
+                    else if (activeTab === "positions") setPositionsPage(p => Math.max(1, p - 1));
+                    else if (activeTab === "history") setHistoryPage(p => Math.max(1, p - 1));
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeTab, filteredMarkets.length]);
 
     return (
         <div>
@@ -126,17 +186,19 @@ export default function MarketList() {
                 </div>
             ) : (
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Tab)} className="space-y-6">
-            <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto justify-start border-none">
+            <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto flex flex-row justify-start border-none w-full overflow-x-auto no-scrollbar">
                 <TabsTrigger 
                     value="active"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
+                    <Activity className="w-4 h-4 mr-2" />
                     Active Markets
                 </TabsTrigger>
                 <TabsTrigger 
                     value="positions"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
+                    <TrendingUp className="w-4 h-4 mr-2" />
                     My Positions
                     {userBets.length > 0 && (
                         <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full transition-colors ${activeTab === "positions" 
@@ -149,13 +211,47 @@ export default function MarketList() {
                 </TabsTrigger>
                 <TabsTrigger 
                     value="history"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
+                    <History className="w-4 h-4 mr-2" />
                     Resolved History
                 </TabsTrigger>
             </TabsList>
 
             <TabsContent value="active" className="mt-0">
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    {/* Filter by Asset */}
+                    <Select value={selectedAsset} onValueChange={(val) => { setSelectedAsset(val); setActivePage(1); }}>
+                        <SelectTrigger className="w-full sm:w-[180px] bg-black/20 border-gray-800" aria-label="Filter by Asset Pair">
+                             <div className="flex items-center gap-2">
+                                 <Filter className="w-4 h-4 text-gray-400" />
+                                 <SelectValue placeholder="Asset Pair" />
+                             </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">All Assets</SelectItem>
+                            {uniqueAssets.map(asset => (
+                                <SelectItem key={asset} value={asset}>{asset}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Sort */}
+                    <Select value={sortOption} onValueChange={setSortOption}>
+                        <SelectTrigger className="w-full sm:w-[180px] bg-black/20 border-gray-800" aria-label="Sort Markets">
+                             <div className="flex items-center gap-2">
+                                 <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                                 <SelectValue placeholder="Sort By" />
+                             </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="endingSoon">Ending Soon</SelectItem>
+                            <SelectItem value="liquidity">Highest Liquidity</SelectItem>
+                            <SelectItem value="newest">Longest Duration</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredMarkets.length === 0 ? (
                         <div className="col-span-full text-center p-16 text-gray-400 border border-gray-800 rounded-xl bg-black/20 space-y-4 animate-fadeIn">
@@ -182,7 +278,7 @@ export default function MarketList() {
 
                 {/* Pagination Controls */}
                 {filteredMarkets.length > 0 && (
-                    <div className="flex items-center justify-between mt-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 sm:gap-0">
                         <div className="text-sm text-gray-500">
                             Page {activePage} of {Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE) || 1}
                         </div>
@@ -192,7 +288,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setActivePage(p => Math.max(1, p - 1))}
                                 disabled={activePage === 1}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Previous Page"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
@@ -201,7 +298,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setActivePage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1))}
                                 disabled={activePage >= Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE)}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Next Page"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -237,7 +335,7 @@ export default function MarketList() {
 
                 {/* Pagination Controls */}
                 {filteredMarkets.length > 0 && (
-                    <div className="flex items-center justify-between mt-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 sm:gap-0">
                         <div className="text-sm text-gray-500">
                             Page {positionsPage} of {Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE) || 1}
                         </div>
@@ -247,7 +345,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setPositionsPage(p => Math.max(1, p - 1))}
                                 disabled={positionsPage === 1}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Previous Page"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
@@ -256,7 +355,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setPositionsPage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1))}
                                 disabled={positionsPage >= Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE)}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Next Page"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -373,7 +473,7 @@ export default function MarketList() {
 
                 {/* Pagination Controls */}
                 {filteredMarkets.length > 0 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                         <div className="text-sm text-gray-500">
                             Page {historyPage} of {Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE) || 1}
                         </div>
@@ -383,7 +483,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
                                 disabled={historyPage === 1}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Previous Page"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
@@ -392,7 +493,8 @@ export default function MarketList() {
                                 size="sm"
                                 onClick={() => setHistoryPage(p => Math.min(Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE), p + 1))}
                                 disabled={historyPage >= Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE)}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
+                                aria-label="Next Page"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -401,7 +503,18 @@ export default function MarketList() {
                 )}
             </TabsContent>
         </Tabs>
-            )}
-        </div>
+        )}
+
+        {showBackToTop && (
+            <Button
+                onClick={scrollToTop}
+                className="fixed bottom-8 right-8 z-50 rounded-full h-12 w-12 p-3 shadow-xl shadow-primary/20 bg-primary text-primary-foreground hover:scale-110 transition-all border-none animate-fadeIn cursor-pointer"
+                title="Back to Top"
+                aria-label="Back to Top"
+            >
+                <ArrowUp className="h-6 w-6" />
+            </Button>
+        )}
+    </div>
     );
 }

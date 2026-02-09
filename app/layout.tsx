@@ -29,18 +29,12 @@ export default function RootLayout({
       >
         <WalletContextProvider>
           <Toaster
-            position="bottom-right"
+            position="top-right"
             toastOptions={{
-              style: {
-                background: "#13141f",
-                color: "#fff",
-                border: "1px solid #1f2937", // border-gray-800
-                borderRadius: "8px",
-                fontFamily: "var(--font-sans)",
-                fontSize: "14px",
-              },
+              className: 'glass-toast',
               success: {
-                duration: 4000,
+                duration: 5000,
+                className: 'glass-toast glass-toast-success',
                 iconTheme: {
                   primary: "#22c55e",
                   secondary: "#13141f",
@@ -48,6 +42,7 @@ export default function RootLayout({
               },
               error: {
                 duration: 5000,
+                className: 'glass-toast glass-toast-error',
                 iconTheme: {
                   primary: "#ef4444",
                   secondary: "#13141f",
