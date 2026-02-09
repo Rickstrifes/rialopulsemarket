@@ -13,7 +13,7 @@ import MarketCardSkeleton from "./MarketCardSkeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Activity, TrendingUp, History, Filter, ArrowUpDown, Inbox, ArrowUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity, TrendingUp, History, Filter, ArrowUpDown, ArrowUp } from "lucide-react";
 
 interface MarketAccount {
     publicKey: PublicKey;
@@ -53,7 +53,8 @@ export default function MarketList() {
     const fetchData = useCallback(async () => {
         // if (markets.length === 0) setLoading(true); // Removed to avoid sync update loop
 
-        // @ts-ignore
+        // @ts-expect-error Wallet type compatibility
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const program = getProgram(connection, wallet) as any;
 
         // Fetch Markets with error handling for old data
@@ -186,17 +187,17 @@ export default function MarketList() {
                 </div>
             ) : (
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Tab)} className="space-y-6">
-            <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto flex flex-row justify-start border-none w-full overflow-x-auto no-scrollbar">
+            <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto flex flex-row justify-start border-none w-full overflow-x-auto no-scrollbar md:overflow-hidden">
                 <TabsTrigger 
                     value="active"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer shrink-0"
+                    className="px-2 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
                     <Activity className="w-4 h-4 mr-2" />
                     Active Markets
                 </TabsTrigger>
                 <TabsTrigger 
                     value="positions"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
+                    className="px-2 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
                     <TrendingUp className="w-4 h-4 mr-2" />
                     My Positions
@@ -211,7 +212,7 @@ export default function MarketList() {
                 </TabsTrigger>
                 <TabsTrigger 
                     value="history"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
+                    className="px-2 md:px-4 py-2 rounded-md text-xs md:text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
                     <History className="w-4 h-4 mr-2" />
                     Resolved History
