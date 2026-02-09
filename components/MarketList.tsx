@@ -192,7 +192,7 @@ export default function MarketList() {
                     className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer shrink-0"
                 >
                     <Activity className="w-4 h-4 mr-2" />
-                    Active Markets
+                    Active
                 </TabsTrigger>
                 <TabsTrigger 
                     value="positions"

@@ -464,20 +464,20 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         ) : (
                              <>
                                 {isWinner && (
-                                    <div className="w-full py-2 bg-retro-green/20 border border-retro-green text-retro-green text-center font-bold tracking-wider rounded uppercase animate-pulse">
-                                        You Won
+                                    <div className="w-full py-3 bg-linear-to-r from-retro-green/10 via-retro-green/20 to-retro-green/10 border border-retro-green/50 text-retro-green text-center font-bold tracking-wider rounded uppercase animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.2)] flex items-center justify-center gap-2">
+                                        <Trophy className="w-5 h-5" /> You Won!
                                     </div>
                                 )}
                                 {isLoser && (
-                                    <div className="w-full py-2 bg-retro-red/20 border border-retro-red text-retro-red text-center font-bold tracking-wider rounded uppercase">
+                                    <div className="w-full py-3 bg-red-500/5 border border-red-500/20 text-red-500 text-center font-bold tracking-wider rounded uppercase flex items-center justify-center gap-2">
                                         You Lost
                                     </div>
                                 )}
                             </>
                         )}
                         {isRefund && (
-                            <div className="w-full py-2 bg-yellow-500/20 border border-yellow-500 text-yellow-400 text-center font-bold tracking-wider rounded uppercase">
-                                Market Refunded
+                            <div className="w-full py-3 bg-linear-to-r from-yellow-500/10 via-yellow-500/20 to-yellow-500/10 border border-yellow-500/50 text-yellow-500 text-center font-bold tracking-wider rounded uppercase flex items-center justify-center gap-2">
+                                <ArrowPathIcon className="w-5 h-5" /> Market Refunded
                             </div>
                         )}
                     </div>
@@ -508,7 +508,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                     value={betAmount}
                                     onChange={handleBetInputChange}
                                     onKeyDown={handleBetKeyDown}
-                                    className="text-right font-mono pb-2 text-foreground placeholder:text-muted-foreground focus:ring-0 border-none bg-transparent"
+                                    className="text-right font-mono pb-2 text-foreground placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 border-none outline-none shadow-none bg-transparent"
                                     placeholder="Enter amount"
                                 />
                                 <InputGroupAddon align="inline-end">
@@ -555,13 +555,24 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         </>
                      )}
 
-                     {canClaim && (
+                    {canClaim && (
                         <Button
                             onClick={claimWinnings}
                             disabled={claiming}
-                            className="w-full bg-retro-green text-black font-bold shadow-lg shadow-retro-green/20 hover:scale-105 transition-all text-sm animate-bounce-subtle hover:bg-retro-green cursor-pointer"
+                            className={`w-full h-14 text-lg font-bold shadow-lg transition-all hover:scale-[1.02] cursor-pointer border-none ${
+                                m.isVoid 
+                                ? "bg-linear-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white shadow-orange-500/20" 
+                                : "bg-linear-to-r from-retro-green via-green-400 to-retro-green hover:from-green-400 hover:via-retro-green hover:to-green-400 text-black shadow-retro-green/30 animate-pulse"
+                            }`}
                         >
-                            {claiming ? "Claiming..." : m.isVoid ? "⚠️ CLAIM REFUND ⚠️" : "💰 CLAIM WINNINGS 💰"}
+                            {claiming ? (
+                                <ArrowPathIcon className="w-6 h-6 animate-spin" /> 
+                            ) : (
+                                <div className="flex flex-col items-center leading-tight">
+                                    <span className="uppercase tracking-widest">{m.isVoid ? "CLAIM REFUND" : "CLAIM WINNINGS"}</span>
+                                    {!m.isVoid && <span className="text-xs opacity-80 font-normal">Total: ${estimatedPayout.toFixed(2)}</span>}
+                                </div>
+                            )}
                         </Button>
                     )}
 
@@ -569,13 +580,11 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     {(hasWon && (userBet.account.claimed || localClaimed)) && (() => {
                         if (m.isVoid) {
                             return (
-                                <Button
-                                    disabled
-                                    className="w-full bg-card border border-border text-muted-foreground cursor-not-allowed hover:bg-card"
-                                >
-                                    <Check className="w-4 h-4 mr-2" />
-                                    Refund Claimed
-                                </Button>
+                                <div className="w-full py-2 bg-secondary/10 border border-dashed border-gray-700 rounded-lg text-center">
+                                    <span className="text-gray-500 flex items-center justify-center gap-2 text-sm">
+                                        <Check className="w-4 h-4" /> Refund Claimed
+                                    </span>
+                                </div>
                             );
                         }
                         
@@ -584,13 +593,14 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         const profitPercentage = totalBetUSDC > 0 ? ((profit / totalBetUSDC) * 100) : 0;
                         
                         return (
-                            <Button
-                                disabled
-                                className="w-full bg-card border border-border text-muted-foreground cursor-not-allowed hover:bg-card"
-                            >
-                                <Check className="w-4 h-4 mr-2" />
-                                Claimed ${estimatedPayout.toFixed(2)} (Profit: +${profit.toFixed(2)}, +{profitPercentage.toFixed(1)}%)
-                            </Button>
+                            <div className="w-full py-3 bg-retro-green/5 border border-dashed border-retro-green/30 rounded-lg text-center">
+                                <div className="text-retro-green font-bold flex items-center justify-center gap-2 mb-1">
+                                    <Check className="w-5 h-5" /> Claimed: ${estimatedPayout.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    Profit: <span className="text-retro-green">+${profit.toFixed(2)} (+{profitPercentage.toFixed(1)}%)</span>
+                                </div>
+                            </div>
                         );
                     })()}
                 </div>
