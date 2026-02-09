@@ -71,7 +71,7 @@ export default function Navbar() {
                     <DialogTrigger asChild>
                         <Button 
                             variant="outline"
-                            className="bg-primary/10 hover:bg-primary/20 border-primary/50 text-primary font-bold transition-all"
+                            className="bg-primary/10 hover:bg-primary hover:text-primary-foreground hover:scale-105 border-primary/50 text-primary font-bold transition-all"
                         >
                             <Plus className="h-4 w-4 mr-2" />
                             Create Market

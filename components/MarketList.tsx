@@ -9,9 +9,11 @@ import { fetchUserBetsWithLegacySupport, NormalizedUserBet } from "@/utils/legac
 import * as anchor from "@coral-xyz/anchor";
 
 import MarketCard from "./MarketCard";
+import MarketCardSkeleton from "./MarketCardSkeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, Activity, TrendingUp, History, Filter, ArrowUpDown, Inbox } from "lucide-react";
 
 interface MarketAccount {
     publicKey: PublicKey;
@@ -112,15 +114,22 @@ export default function MarketList() {
             return b.account.endTime.toNumber() - a.account.endTime.toNumber();
         });
 
-    if (loading && markets.length === 0) return <div className="text-center p-10 animate-pulse text-primary">Loading Markets...</div>;
-
     return (
-        <>
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+        <div>
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="animate-fadeIn" style={{animationDelay: `${i * 100}ms`}}>
+                            <MarketCardSkeleton />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as Tab)} className="space-y-6">
             <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto justify-start border-none">
                 <TabsTrigger 
                     value="active"
-                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-all border-none shadow-none cursor-pointer"
                 >
                     Active Markets
                 </TabsTrigger>
@@ -149,8 +158,12 @@ export default function MarketList() {
             <TabsContent value="active" className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredMarkets.length === 0 ? (
-                         <div className="col-span-full text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
-                            No active markets right now.
+                        <div className="col-span-full text-center p-16 text-gray-400 border border-gray-800 rounded-xl bg-black/20 space-y-4 animate-fadeIn">
+                            <Activity className="h-16 w-16 mx-auto text-gray-600" />
+                            <div>
+                                <p className="text-lg font-semibold">No active markets</p>
+                                <p className="text-sm text-gray-500">Create a market or wait for new markets to appear</p>
+                            </div>
                         </div>
                     ) : (
                         filteredMarkets.slice((activePage - 1) * ACTIVE_ITEMS_PER_PAGE, activePage * ACTIVE_ITEMS_PER_PAGE).map((m) => {
@@ -200,8 +213,12 @@ export default function MarketList() {
             <TabsContent value="positions" className="mt-0">
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredMarkets.length === 0 ? (
-                        <div className="col-span-full text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
-                            You haven't placed any bets yet.
+                        <div className="col-span-full text-center p-16 text-gray-400 border border-gray-800 rounded-xl bg-black/20 mt-4 space-y-4 animate-fadeIn">
+                            <TrendingUp className="h-16 w-16 mx-auto text-gray-600" />
+                            <div>
+                                <p className="text-lg font-semibold">No positions yet</p>
+                                <p className="text-sm text-gray-500">Place a bet on a market to see your positions here!</p>
+                            </div>
                         </div>
                     ) : (
                         filteredMarkets.slice((positionsPage - 1) * ACTIVE_ITEMS_PER_PAGE, positionsPage * ACTIVE_ITEMS_PER_PAGE).map((m) => {
@@ -262,11 +279,17 @@ export default function MarketList() {
                         </thead>
                         <tbody className="divide-y divide-gray-800">
                              {filteredMarkets.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="text-center p-10 text-gray-500 border-none">
-                                        No resolved markets history.
-                                    </td>
-                                </tr>
+                                 <tr>
+                                     <td colSpan={5} className="text-center p-16 border-none">
+                                         <div className="flex flex-col items-center space-y-4 text-gray-400">
+                                             <History className="h-16 w-16 text-gray-600" />
+                                             <div>
+                                                 <p className="text-lg font-semibold">No resolved markets</p>
+                                                 <p className="text-sm text-gray-500">Markets that have been settled will appear here</p>
+                                             </div>
+                                         </div>
+                                     </td>
+                                 </tr>
                              ) : (
                                 filteredMarkets.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE).map((m) => {
                                 const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
@@ -378,6 +401,7 @@ export default function MarketList() {
                 )}
             </TabsContent>
         </Tabs>
-        </>
+            )}
+        </div>
     );
 }

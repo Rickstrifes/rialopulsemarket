@@ -295,7 +295,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const totalDown = m.totalPoolDown.toNumber() / 1_000_000;
 
     return (
-        <Card className="glass-panel border-2 border-secondary/20 relative overflow-hidden transition-all hover:border-secondary/50">
+        <Card className="glass-panel border-2 border-secondary/20 relative overflow-hidden transition-all duration-300 hover:border-secondary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
              {isExpired && !m.resolved && (
                 <Badge variant="outline" className="absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l bg-blue-500/20 text-blue-400 border-blue-500/20 animate-pulse flex items-center gap-1 z-10">
                     <ArrowPathIcon className="w-3 h-3 animate-spin" /> Settling...

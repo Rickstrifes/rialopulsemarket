@@ -97,7 +97,7 @@ export default function Faucet() {
                 onClick={claimFaucet}
                 disabled={!wallet.publicKey || loading}
                 variant="outline"
-                className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary font-bold transition-all whitespace-nowrap cursor-pointer"
+                className="flex items-center gap-2 bg-primary/10 hover:bg-primary hover:text-primary-foreground hover:scale-105 border-primary/20 text-primary font-bold transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-primary/10 disabled:hover:text-primary"
             >
                 {loading ? (
                     <>
