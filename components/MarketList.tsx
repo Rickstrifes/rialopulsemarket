@@ -10,6 +10,8 @@ import * as anchor from "@coral-xyz/anchor";
 
 import MarketCard from "./MarketCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MarketAccount {
     publicKey: PublicKey;
@@ -36,6 +38,8 @@ export default function MarketList() {
     const [userBets, setUserBets] = useState<NormalizedUserBet[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>("active");
+    const [historyPage, setHistoryPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const fetchData = useCallback(async () => {
         // if (markets.length === 0) setLoading(true); // Removed to avoid sync update loop
@@ -203,7 +207,7 @@ export default function MarketList() {
                                     </td>
                                 </tr>
                              ) : (
-                                filteredMarkets.map((m) => {
+                                filteredMarkets.slice((historyPage - 1) * ITEMS_PER_PAGE, historyPage * ITEMS_PER_PAGE).map((m) => {
                                 const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
                                 const ma = m.account;
 
@@ -282,6 +286,35 @@ export default function MarketList() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredMarkets.length > 0 && (
+                    <div className="flex items-center justify-between mt-4">
+                        <div className="text-sm text-gray-500">
+                            Page {historyPage} of {Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE) || 1}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                disabled={historyPage === 1}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setHistoryPage(p => Math.min(Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE), p + 1))}
+                                disabled={historyPage >= Math.ceil(filteredMarkets.length / ITEMS_PER_PAGE)}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </TabsContent>
         </Tabs>
         </>
