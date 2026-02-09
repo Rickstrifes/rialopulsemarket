@@ -39,7 +39,10 @@ export default function MarketList() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>("active");
     const [historyPage, setHistoryPage] = useState(1);
+    const [activePage, setActivePage] = useState(1);
+    const [positionsPage, setPositionsPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
+    const ACTIVE_ITEMS_PER_PAGE = 6;
 
     const fetchData = useCallback(async () => {
         // if (markets.length === 0) setLoading(true); // Removed to avoid sync update loop
@@ -150,7 +153,7 @@ export default function MarketList() {
                             No active markets right now.
                         </div>
                     ) : (
-                        filteredMarkets.map((m) => {
+                        filteredMarkets.slice((activePage - 1) * ACTIVE_ITEMS_PER_PAGE, activePage * ACTIVE_ITEMS_PER_PAGE).map((m) => {
                             const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
                             return (
                                 <MarketCard
@@ -163,6 +166,35 @@ export default function MarketList() {
                         })
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredMarkets.length > 0 && (
+                    <div className="flex items-center justify-between mt-6">
+                        <div className="text-sm text-gray-500">
+                            Page {activePage} of {Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE) || 1}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActivePage(p => Math.max(1, p - 1))}
+                                disabled={activePage === 1}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActivePage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1))}
+                                disabled={activePage >= Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE)}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </TabsContent>
 
             <TabsContent value="positions" className="mt-0">
@@ -172,7 +204,7 @@ export default function MarketList() {
                             You haven't placed any bets yet.
                         </div>
                     ) : (
-                        filteredMarkets.map((m) => {
+                        filteredMarkets.slice((positionsPage - 1) * ACTIVE_ITEMS_PER_PAGE, positionsPage * ACTIVE_ITEMS_PER_PAGE).map((m) => {
                             const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
                             return (
                                 <MarketCard
@@ -185,6 +217,35 @@ export default function MarketList() {
                         })
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredMarkets.length > 0 && (
+                    <div className="flex items-center justify-between mt-6">
+                        <div className="text-sm text-gray-500">
+                            Page {positionsPage} of {Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE) || 1}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPositionsPage(p => Math.max(1, p - 1))}
+                                disabled={positionsPage === 1}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPositionsPage(p => Math.min(Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE), p + 1))}
+                                disabled={positionsPage >= Math.ceil(filteredMarkets.length / ACTIVE_ITEMS_PER_PAGE)}
+                                className="h-8 w-8 p-0"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </TabsContent>
 
             <TabsContent value="history" className="mt-0">
