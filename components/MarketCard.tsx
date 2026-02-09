@@ -24,6 +24,7 @@ import { getErrorMessage } from "@/utils/errorParser";
 import { showBetSuccessToast, notify } from "@/utils/notifications";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CryptoIcon from "./CryptoIcon";
 import { Button } from "@/components/ui/button";
 
 import { InputGroup, InputGroupAddon, InputGroupText, InputGroupInput } from "@/components/ui/input-group";
@@ -345,6 +346,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             <CardHeader className="mt-6 pb-2">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
+                        <CryptoIcon symbol={m.pairName} size={28} />
                         <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-foreground to-muted-foreground">
                             {m.pairName}
                         </CardTitle>
