@@ -78,97 +78,101 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --radius: var(--radius);
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
 
   --color-retro-green: hsl(var(--retro-green));
   --color-retro-red: hsl(var(--retro-red));
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-  /* Sidebar Legacy Variables Mapping */
-  --color-sidebar: hsl(var(--card));
-  --color-sidebar-foreground: hsl(var(--card-foreground));
-  --color-sidebar-primary: hsl(var(--primary));
-  --color-sidebar-primary-foreground: hsl(var(--primary-foreground));
-  --color-sidebar-accent: hsl(var(--secondary));
-  --color-sidebar-accent-foreground: hsl(var(--secondary-foreground));
-  --color-sidebar-border: hsl(var(--border));
-  --color-sidebar-ring: hsl(var(--ring));
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-md: 0.5rem;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+/* Global Styles */
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Glass Panel Effect */
+.glass-panel {
+  @apply bg-card/40 backdrop-blur-xl border border-border/50;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  body {
-    @apply bg-background text-foreground;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Custom Utility Classes */
-@layer utilities {
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(232, 227, 213, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(232, 227, 213, 0.8);
   }
 }
 
-/* React Datepicker Overrides for Dark Theme */
-.react-datepicker {
-  background-color: hsl(var(--card)) !important;
-  border-color: hsl(var(--border)) !important;
-  color: hsl(var(--foreground)) !important;
-  font-family: var(--font-sans) !important;
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
-.react-datepicker__header {
-  background-color: hsl(var(--muted)) !important;
-  border-bottom-color: hsl(var(--border)) !important;
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
 }
-.react-datepicker__current-month, 
-.react-datepicker__day-name, 
-.react-datepicker__time-name {
-  color: hsl(var(--foreground)) !important;
+
+.animate-pulseGlow {
+  animation: pulseGlow 2s ease-in-out infinite;
 }
-.react-datepicker__day {
-  color: hsl(var(--muted-foreground)) !important;
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
 }
-.react-datepicker__day:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
+
+/* Badge Styles */
+.badge-ending-soon {
+  @apply animate-pulse bg-destructive/20 text-destructive border border-destructive/50 px-2 py-1 text-xs rounded-md font-semibold;
 }
-.react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
+
+.badge-new {
+  @apply bg-primary/20 text-primary border border-primary/50 px-2 py-1 text-xs rounded-md font-semibold;
 }
-.react-datepicker__time-container {
-  border-left-color: hsl(var(--border)) !important;
+
+/* Price Change Indicators */
+.price-up {
+  @apply text-green-500;
 }
-.react-datepicker__time {
-  background-color: hsl(var(--card)) !important;
+
+.price-down {
+  @apply text-red-500;
 }
-.react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
-  color: hsl(var(--foreground)) !important;
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary;
 }
-.react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover {
-  background-color: hsl(var(--accent)) !important;
-  color: hsl(var(--accent-foreground)) !important;
-}
-.react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
+
+/* Sticky Pagination */
+.sticky-pagination {
+  @apply sticky bottom-0 bg-background/95 backdrop-blur-md border-t border-border/50 z-10 p-4;
 }
