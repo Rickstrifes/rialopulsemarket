@@ -10,7 +10,7 @@ import Faucet from "./Faucet";
 import CreateMarket from "./CreateMarket";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Activity } from "lucide-react";
 
 export default function Navbar() {
     const { connection } = useConnection();
@@ -55,10 +55,11 @@ export default function Navbar() {
         
         <nav className="flex justify-between items-center p-4 border-b border-border backdrop-blur-md sticky top-0 z-50 bg-background/80 text-foreground">
             <div className="flex items-center gap-4 w-1/3">
-                <div className="text-2xl font-bold tracking-tighter text-foreground shrink-0">
-                    PULSE
+                <div className="flex items-center gap-2">
+                    <Activity className="h-8 w-8 text-primary animate-pulse" />
                 </div>
                 <div className="h-8 w-px bg-border shrink-0" />
+                <span className="text-md font-bold tracking-tighter text-primary">predict the future.</span>
             </div>
 
             {/* Center: Tagline */}
