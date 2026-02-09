@@ -1,45 +1,58 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+@import "../node_modules/tw-animate-css/dist/tw-animate.css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *)); /* Keeping this in case user has a custom setup, though likely unused */
+@custom-variant dark (&:is(.dark *));
+/* Keeping this in case user has a custom setup, though likely unused */
 
 @layer base {
   :root {
     /* Nord Palette & OLED Black Theme */
-    --background: 0 0% 0%; /* Pure Black */
+    --background: 0 0% 0%;
+    /* Pure Black */
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 2%; /* Very dark gray for cards (almost black) */
+    --card: 0 0% 2%;
+    /* Very dark gray for cards (almost black) */
     --card-foreground: 0 0% 98%;
 
     --popover: 0 0% 3%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 42 27% 87%; /* #E8E3D5 Snow Storm Eggshell (Replacing Cyan) */
-    --primary-foreground: 0 0% 0%; /* Black text */
+    --primary: 42 27% 87%;
+    /* #E8E3D5 Snow Storm Eggshell (Replacing Cyan) */
+    --primary-foreground: 0 0% 0%;
+    /* Black text */
 
-    --secondary: 215 8% 15%; /* Darker Gray for secondary */
+    --secondary: 215 8% 15%;
+    /* Darker Gray for secondary */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 215 8% 15%; /* #2e3440 Nord Polar Night Lighter */
+    --muted: 215 8% 15%;
+    /* #2e3440 Nord Polar Night Lighter */
     --muted-foreground: 218 11% 65%;
 
-    --accent: 42 27% 87%; /* Same as primary for consistency */
+    --accent: 42 27% 87%;
+    /* Same as primary for consistency */
     --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 84% 60%; /* #bf616a Nord Red */
+    --destructive: 0 84% 60%;
+    /* #bf616a Nord Red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 8% 15%; /* #2e3440 */
+    --border: 215 8% 15%;
+    /* #2e3440 */
     --input: 215 8% 15%;
-    --ring: 42 27% 87%; /* Primary color ring */
+    --ring: 42 27% 87%;
+    /* Primary color ring */
 
     --radius: 0.5rem;
 
     /* Retro/Chart Colors */
-    --retro-green: 149 44% 62%; /* #74c69d */
-    --retro-red: 356 75% 56%; /* #e63946 */
+    --retro-green: 149 44% 62%;
+    /* #74c69d */
+    --retro-red: 356 75% 56%;
+    /* #e63946 */
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -111,6 +124,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -118,9 +132,12 @@ body {
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(232, 227, 213, 0.5);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(232, 227, 213, 0.8);
   }
@@ -131,6 +148,7 @@ body {
     transform: translateY(100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -175,6 +193,7 @@ body {
 /* Sticky Pagination */
 .sticky-pagination {
   @apply sticky bottom-0 bg-background/95 backdrop-blur-md border-t border-border/50 z-10 p-4;
+<<<<<<< HEAD
 }
 
 /* Glass Toast */
@@ -199,3 +218,6 @@ body {
   background: rgba(239, 68, 68, 0.05) !important;
 }
 .no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+=======
+}
+>>>>>>> fa284d5be6b84fe32d3fde8b39dbc061c885b16e
