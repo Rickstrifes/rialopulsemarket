@@ -14,8 +14,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -166,13 +164,7 @@ export default function CreateMarket({ onSuccess }: { onSuccess?: () => void }) 
     };
 
     return (
-        <Card className="glass-panel border-border/30">
-            <CardHeader>
-                <CardTitle className="text-xl font-bold text-foreground">
-                    Create Market
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
+        <div className="space-y-4">
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label className="mb-2 block">Asset Pair</Label>
@@ -298,7 +290,6 @@ export default function CreateMarket({ onSuccess }: { onSuccess?: () => void }) 
                         {loading ? "Creating..." : "Initialize Market"}
                     </Button>
                 </div>
-            </CardContent>
-        </Card>
+        </div>
     );
 }
