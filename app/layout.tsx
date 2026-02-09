@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${outfit.variable} antialiased min-h-screen flex flex-col font-sans`}
+        className={`${outfit.variable} antialiased min-h-screen flex flex-col font-sans bg-background text-foreground`}
       >
         <WalletContextProvider>
           <Toaster
@@ -56,7 +56,7 @@ export default function RootLayout({
             }}
           />
           <Navbar />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <main className="grow container mx-auto px-4 py-8">
             {children}
           </main>
           <footer className="py-4 text-center text-sm text-gray-500 border-t border-gray-800">

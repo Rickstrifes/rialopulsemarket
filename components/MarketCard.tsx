@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { useConnection, useWallet, AnchorWallet } from "@jup-ag/wallet-adapter";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { getProgram } from "@/utils/anchor";
-import { USDC_MINT, ORACLE_PUBKEY } from "@/utils/constants";
+import { USDC_MINT } from "@/utils/constants";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor";
 
@@ -18,15 +18,14 @@ import {
     BET_PRESETS,
     isValidBetFormat,
     isValidBetAmount,
-    parseUsdcAmount,
-    USDC_MULTIPLIER
+    parseUsdcAmount
 } from "@/utils/betting";
 import { getErrorMessage } from "@/utils/errorParser";
 import { showBetSuccessToast, notify } from "@/utils/notifications";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { InputGroup, InputGroupAddon, InputGroupText, InputGroupInput } from "@/components/ui/input-group";
 import { Badge } from "@/components/ui/badge";
 
@@ -67,7 +66,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
     const [placingBet, setPlacingBet] = useState(false);
     const [timeLeft, setTimeLeft] = useState<string>("");
-    const [resolving, setResolving] = useState(false);
+
     const [claiming, setClaiming] = useState(false);
     const [localClaimed, setLocalClaimed] = useState(false);
     const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -207,8 +206,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
 
         setPlacingBet(true);
         try {
-            // @ts-ignore
-            const program = getProgram(connection, wallet) as any;
+            const program = getProgram(connection, wallet as AnchorWallet);
 
             const [userBet] = PublicKey.findProgramAddressSync(
                 [Buffer.from("bet"), market.publicKey.toBuffer(), wallet.publicKey.toBuffer()],
@@ -239,7 +237,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             showBetSuccessToast(tx);
             setBetAmount(""); // Clear input
             onRefresh();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Bet error:", error);
             notify.error(getErrorMessage(error));
         } finally {
@@ -251,8 +249,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
         if (!wallet.publicKey || !userBet) return;
         setClaiming(true);
         try {
-            // @ts-ignore
-            const program = getProgram(connection, wallet) as any;
+            const program = getProgram(connection, wallet as AnchorWallet);
 
             const [vaultTokenAccount] = PublicKey.findProgramAddressSync(
                 [Buffer.from("vault"), market.publicKey.toBuffer()],
@@ -276,7 +273,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             notify.success(m.isVoid ? "Refund Claimed!" : "Winnings Claimed!");
             setLocalClaimed(true); // Optimistic update
             onRefresh();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Claim error:", error);
             const errMsg = getErrorMessage(error);
 
@@ -297,7 +294,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
     const totalDown = m.totalPoolDown.toNumber() / 1_000_000;
 
     return (
-        <Card className="glass-panel border-secondary/30 relative overflow-hidden transition-all hover:border-secondary/50">
+        <Card className="glass-panel border-2 border-secondary/20 relative overflow-hidden transition-all hover:border-secondary/50">
              {isExpired && !m.resolved && (
                 <Badge variant="outline" className="absolute top-0 right-0 rounded-bl-lg rounded-tr-lg border-b border-l bg-blue-500/20 text-blue-400 border-blue-500/20 animate-pulse flex items-center gap-1 z-10">
                     <ArrowPathIcon className="w-3 h-3 animate-spin" /> Settling...
@@ -309,8 +306,8 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                     m.isVoid 
                         ? 'bg-gray-800 text-gray-400 border-b border-l border-gray-700 rounded-bl-xl' 
                         : m.resultUp 
-                            ? 'bg-retro-green text-black border-b border-l border-retro-green shadow-[0_0_15px_rgba(34,197,94,0.4)] rounded-bl-xl' 
-                            : 'bg-retro-red text-white border-b border-l border-retro-red shadow-[0_0_15px_rgba(239,68,68,0.4)] rounded-bl-xl'
+                            ? 'bg-retro-green text-black border-b border-l border-retro-green rounded-bl-xl' 
+                            : 'bg-retro-red text-white border-b border-l border-retro-red rounded-bl-xl'
                 }`}>
                     {!m.isVoid && <Trophy className="w-3 h-3" />}
                     {m.isVoid ? "VOIDED" : `${m.resultUp ? "UP" : "DOWN"} WINS`}
@@ -348,10 +345,10 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             <CardHeader className="mt-6 pb-2">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-foreground to-muted-foreground">
                             {m.pairName}
                         </CardTitle>
-                        <span className="text-[10px] font-mono text-gray-500 bg-gray-900 border border-gray-800 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 transition-opacity cursor-help" title={`Market ID: ${market.publicKey.toString()}`}>
+                        <span className="text-[10px] font-mono text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 transition-opacity cursor-help" title={`Market ID: ${market.publicKey.toString()}`}>
                              #{market.publicKey.toString().slice(0, 4)}...{market.publicKey.toString().slice(-4)}
                         </span>
                     </div>
@@ -363,24 +360,24 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
             
             <CardContent>
                 {/* Price Display */}
-                <div className="flex justify-between text-xs mb-4 bg-black/20 p-2 rounded border border-gray-800">
+                <div className="flex justify-between text-xs mb-4 bg-muted/50 p-2 rounded border border-border">
                     <div className="text-center">
-                        <div className="text-gray-500">Strike Price</div>
-                        <p className="text-white font-mono">
+                        <div className="text-muted-foreground">Strike Price</div>
+                        <p className="text-foreground font-mono">
                             {formatPythPrice(m.initialPrice)}
                         </p>
                     </div>
                     {!isExpired && (
                         <div className="text-center">
-                            <div className="text-gray-500">Current Price</div>
-                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-retro-green' : 'text-retro-red') : 'text-gray-400'}`}>
+                            <div className="text-muted-foreground">Current Price</div>
+                            <div className={`font-mono ${currentPrice && m.initialPrice ? (currentPrice > (m.initialPrice.toNumber() / 100000000) ? 'text-retro-green' : 'text-retro-red') : 'text-muted-foreground'}`}>
                                 {currentPrice ? formatCurrency(currentPrice) : "Loading..."}
                             </div>
                         </div>
                     )}
                     {m.resolved && (
                         <div className="text-center">
-                            <div className="text-gray-500">Settlement</div>
+                            <div className="text-muted-foreground">Settlement</div>
                             <div className={`font-mono ${m.resultUp ? 'text-retro-green' : 'text-retro-red'}`}>
                                 {formatPythPrice(m.finalPrice)}
                             </div>
@@ -392,15 +389,15 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                  {m.resolved && userBet && (
                     <div className="mb-4">
                         {isHedged && !m.isVoid ? (
-                             <div className="bg-gray-900/80 rounded-lg p-3 border border-gray-700 text-sm">
-                                <div className="text-gray-400 text-xs mb-2 text-center uppercase tracking-wide">Position Summary</div>
+                             <div className="bg-card rounded-lg p-3 border border-border text-sm">
+                                <div className="text-muted-foreground text-xs mb-2 text-center uppercase tracking-wide">Position Summary</div>
                                 {/* UP ROW */}
                                 <div className="flex justify-between items-center mb-1">
                                     <div className="flex items-center gap-1">
                                         <span className="w-2 h-2 rounded-full bg-retro-green"></span>
                                         <span className="text-retro-green font-bold">UP</span>
                                     </div>
-                                    <div className={m.resultUp ? "text-retro-green font-bold" : "text-gray-500"}>
+                                    <div className={m.resultUp ? "text-retro-green font-bold" : "text-muted-foreground"}>
                                         ${(userBet.account.amountUp.toNumber() / 1_000_000).toFixed(2)}
                                         {m.resultUp ? " (WON)" : " (LOST)"}
                                     </div>
@@ -411,14 +408,14 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                         <span className="w-2 h-2 rounded-full bg-retro-red"></span>
                                         <span className="text-retro-red font-bold">DOWN</span>
                                     </div>
-                                    <div className={!m.resultUp ? "text-retro-green font-bold" : "text-gray-500"}>
+                                    <div className={!m.resultUp ? "text-retro-green font-bold" : "text-muted-foreground"}>
                                         ${(userBet.account.amountDown.toNumber() / 1_000_000).toFixed(2)}
                                         {!m.resultUp ? " (WON)" : " (LOST)"}
                                     </div>
                                 </div>
                                 {/* TOTAL PAYOUT */}
-                                <div className="border-t border-gray-700 pt-2 flex justify-between items-center">
-                                    <span className="text-gray-300 font-bold">Total Payout:</span>
+                                <div className="border-t border-border pt-2 flex justify-between items-center">
+                                    <span className="text-muted-foreground font-bold">Total Payout:</span>
                                     <span className="text-yellow-400 font-mono font-bold text-lg">
                                         ✨ ${estimatedPayout.toFixed(2)}
                                     </span>
@@ -427,7 +424,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         ) : (
                              <>
                                 {isWinner && (
-                                    <div className="w-full py-2 bg-retro-green/20 border border-retro-green text-retro-green text-center font-bold tracking-wider rounded uppercase shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse">
+                                    <div className="w-full py-2 bg-retro-green/20 border border-retro-green text-retro-green text-center font-bold tracking-wider rounded uppercase animate-pulse">
                                         You Won
                                     </div>
                                 )}
@@ -448,11 +445,11 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
 
                 <div className="flex justify-between mb-6 text-sm">
                     <div className="text-center">
-                        <div className="text-gray-400 mb-1">Pool UP</div>
+                        <div className="text-muted-foreground mb-1">Pool UP</div>
                         <div className="text-retro-green font-mono text-lg">${totalUp.toFixed(2)}</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-gray-400 mb-1">Pool DOWN</div>
+                        <div className="text-muted-foreground mb-1">Pool DOWN</div>
                         <div className="text-retro-red font-mono text-lg">${totalDown.toFixed(2)}</div>
                     </div>
                 </div>
@@ -461,9 +458,9 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                      {!isExpired && (
                         <>
                              {/* Amount Input */}
-                            <InputGroup>
+                            <InputGroup className="bg-secondary/20 border border-border rounded-lg mb-3">
                                 <InputGroupAddon align="inline-start">
-                                    <InputGroupText>$</InputGroupText>
+                                    <InputGroupText className="text-muted-foreground">$</InputGroupText>
                                 </InputGroupAddon>
                                 <InputGroupInput
                                     type="text"
@@ -471,26 +468,26 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                     value={betAmount}
                                     onChange={handleBetInputChange}
                                     onKeyDown={handleBetKeyDown}
-                                    className="text-right font-mono pb-2"
+                                    className="text-right font-mono pb-2 text-foreground placeholder:text-muted-foreground focus:ring-0 border-none bg-transparent"
                                     placeholder="Enter amount"
                                 />
                                 <InputGroupAddon align="inline-end">
-                                    <InputGroupText>USDC</InputGroupText>
+                                    <InputGroupText className="text-muted-foreground">USDC</InputGroupText>
                                 </InputGroupAddon>
                             </InputGroup>
 
                             {/* Quick Select Presets */}
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mb-4">
                                 {BET_PRESETS.map((preset) => (
                                     <Button
                                         key={preset}
-                                        variant="outline"
+                                        variant="ghost"
                                         size="sm"
                                         onClick={() => handlePresetClick(preset)}
-                                        className={`flex-1 text-xs font-mono h-8 border focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer ${
+                                        className={`flex-1 text-xs font-mono h-8 border-none cursor-pointer transition-all ${
                                             selectedPreset === preset
-                                                ? "bg-retro-green/20 text-retro-green border-retro-green font-bold shadow-[0_0_10px_rgba(34,197,94,0.2)]"
-                                                : "bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-200"
+                                                ? "bg-secondary text-secondary-foreground font-bold"
+                                                : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                                         }`}
                                     >
                                         {preset} USDC
@@ -503,14 +500,14 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                 <Button
                                     onClick={() => placeBet(true)}
                                     disabled={isExpired || placingBet || !isBetValid}
-                                    className="bg-retro-green/10 text-retro-green border border-retro-green/30 hover:bg-retro-green/20 cursor-pointer"
+                                    className="bg-retro-green text-black font-bold hover:bg-retro-green/90 transition-all cursor-pointer border-none h-12 text-lg"
                                 >
                                      {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET UP"}
                                 </Button>
                                 <Button
                                     onClick={() => placeBet(false)}
                                     disabled={isExpired || placingBet || !isBetValid}
-                                    className="bg-retro-red/10 text-retro-red border border-retro-red/30 hover:bg-retro-red/20 cursor-pointer"
+                                    className="bg-retro-red text-white font-bold hover:bg-retro-red/90 transition-all cursor-pointer border-none h-12 text-lg"
                                 >
                                     {placingBet ? <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" /> : "BET DOWN"}
                                 </Button>
@@ -534,7 +531,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                             return (
                                 <Button
                                     disabled
-                                    className="w-full bg-gray-900 border border-gray-800 text-gray-400 cursor-not-allowed hover:bg-gray-900"
+                                    className="w-full bg-card border border-border text-muted-foreground cursor-not-allowed hover:bg-card"
                                 >
                                     <Check className="w-4 h-4 mr-2" />
                                     Refund Claimed
@@ -549,7 +546,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                         return (
                             <Button
                                 disabled
-                                className="w-full bg-gray-900 border border-gray-800 text-gray-400 cursor-not-allowed hover:bg-gray-900"
+                                className="w-full bg-card border border-border text-muted-foreground cursor-not-allowed hover:bg-card"
                             >
                                 <Check className="w-4 h-4 mr-2" />
                                 Claimed ${estimatedPayout.toFixed(2)} (Profit: +${profit.toFixed(2)}, +{profitPercentage.toFixed(1)}%)

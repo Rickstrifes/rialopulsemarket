@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { getProgram } from "@/utils/anchor";
@@ -9,6 +9,7 @@ import { fetchUserBetsWithLegacySupport, NormalizedUserBet } from "@/utils/legac
 import * as anchor from "@coral-xyz/anchor";
 
 import MarketCard from "./MarketCard";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface MarketAccount {
     publicKey: PublicKey;
@@ -26,7 +27,6 @@ interface MarketAccount {
     }
 }
 
-
 type Tab = "active" | "positions" | "history";
 
 export default function MarketList() {
@@ -34,17 +34,11 @@ export default function MarketList() {
     const wallet = useWallet();
     const [markets, setMarkets] = useState<MarketAccount[]>([]);
     const [userBets, setUserBets] = useState<NormalizedUserBet[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>("active");
 
-    const fetchData = async () => {
-        // ... (fetches remain same, maybe remove wallet check for public tabs? 
-        // actually userBets needs wallet. But markets don't.)
-        // Refactor fetchData to allow fetching markets even if wallet not connected?
-        // Current code: `if (!wallet.publicKey) return;`
-        // We should probably allow viewing markets without wallet.
-
-        if (markets.length === 0) setLoading(true);
+    const fetchData = useCallback(async () => {
+        // if (markets.length === 0) setLoading(true); // Removed to avoid sync update loop
 
         // @ts-ignore
         const program = getProgram(connection, wallet) as any;
@@ -55,7 +49,6 @@ export default function MarketList() {
             setMarkets(marketAccounts);
         } catch (error) {
             console.error("Error fetching markets (may be old incompatible data):", error);
-            // Keep existing markets if any, or set empty
             if (markets.length === 0) setMarkets([]);
         }
 
@@ -68,7 +61,7 @@ export default function MarketList() {
                     wallet.publicKey
                 );
                 setUserBets(userBetAccounts);
-
+                
                 // Log legacy accounts for visibility
                 const legacyCount = userBetAccounts.filter(b => b.account.isLegacy).length;
                 if (legacyCount > 0) {
@@ -83,21 +76,21 @@ export default function MarketList() {
         }
 
         setLoading(false);
-    };
+    }, [connection, wallet, markets.length]);
 
     useEffect(() => {
-        fetchData();
+        const run = async () => {
+             await fetchData();
+        };
+        run();
         const interval = setInterval(fetchData, 5000); // 5s poll
         return () => clearInterval(interval);
-    }, [wallet.publicKey, connection]);
+    }, [fetchData]);
 
     // Filtering & Sorting
     const filteredMarkets = markets
         .filter((m) => {
             if (activeTab === "active") {
-                // Show Unresolved (Active + Settling)
-                // User requirement: "endTime > now AND resolved === false"
-                // I will include Settling (endTime < now) too because otherwise they disappear.
                 return !m.account.resolved;
             }
             if (activeTab === "positions") {
@@ -109,55 +102,88 @@ export default function MarketList() {
             return true;
         })
         .sort((a, b) => {
-            // Newest First (Sort by endTime Descending)
-            // Or maybe creation time? We don't have creation time in IDL explicitly?
-            // We have `endTime`. Assuming duration is somewhat constant, endTime is a proxy for creation.
             return b.account.endTime.toNumber() - a.account.endTime.toNumber();
         });
 
     if (loading && markets.length === 0) return <div className="text-center p-10 animate-pulse text-primary">Loading Markets...</div>;
 
     return (
-        <div className="space-y-6">
-            {/* Tab Navigation */}
-            <div className="flex space-x-1 bg-black/40 p-1 rounded-lg border border-gray-800 w-fit">
-                <button
-                    onClick={() => setActiveTab("active")}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "active"
-                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                        : "text-gray-500 hover:text-gray-300"
-                        }`}
+        <>
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+            <TabsList className="mb-4 bg-transparent p-0 gap-2 h-auto justify-start border-none">
+                <TabsTrigger 
+                    value="active"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
                 >
                     Active Markets
-                </button>
-                <button
-                    onClick={() => setActiveTab("positions")}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "positions"
-                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                        : "text-gray-500 hover:text-gray-300"
-                        }`}
+                </TabsTrigger>
+                <TabsTrigger 
+                    value="positions"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
                 >
                     My Positions
                     {userBets.length > 0 && (
-                        <span className="ml-2 bg-secondary text-black text-[10px] px-1.5 py-0.5 rounded-full">
+                        <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full transition-colors ${activeTab === "positions" 
+                            ? "bg-black text-white" 
+                            : "bg-gray-800 text-gray-400"
+                        }`}>
                             {userBets.length}
                         </span>
                     )}
-                </button>
-                <button
-                    onClick={() => setActiveTab("history")}
-                    className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === "history"
-                        ? "bg-secondary/20 text-secondary shadow-[0_0_10px_rgba(168,85,247,0.2)]"
-                        : "text-gray-500 hover:text-gray-300"
-                        }`}
+                </TabsTrigger>
+                <TabsTrigger 
+                    value="history"
+                    className="px-4 py-2 rounded-md text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-black data-[state=inactive]:bg-transparent data-[state=inactive]:text-gray-500 hover:text-gray-300 transition-all border-none shadow-none cursor-pointer"
                 >
                     Resolved History
-                </button>
-            </div>
+                </TabsTrigger>
+            </TabsList>
 
-            {/* Content Area */}
-            {activeTab === "history" ? (
-                /* History Table View */
+            <TabsContent value="active" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMarkets.length === 0 ? (
+                         <div className="col-span-full text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
+                            No active markets right now.
+                        </div>
+                    ) : (
+                        filteredMarkets.map((m) => {
+                            const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
+                            return (
+                                <MarketCard
+                                    key={m.publicKey.toString()}
+                                    market={m}
+                                    userBet={myBet}
+                                    onRefresh={fetchData}
+                                />
+                            );
+                        })
+                    )}
+                </div>
+            </TabsContent>
+
+            <TabsContent value="positions" className="mt-0">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMarkets.length === 0 ? (
+                        <div className="col-span-full text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
+                            You haven't placed any bets yet.
+                        </div>
+                    ) : (
+                        filteredMarkets.map((m) => {
+                            const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
+                            return (
+                                <MarketCard
+                                    key={m.publicKey.toString()}
+                                    market={m}
+                                    userBet={myBet}
+                                    onRefresh={fetchData}
+                                />
+                            );
+                        })
+                    )}
+                </div>
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-0">
                 <div className="overflow-x-auto rounded-xl border border-gray-800 bg-black/20">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-900/50 text-gray-400 uppercase font-mono text-xs">
@@ -170,7 +196,14 @@ export default function MarketList() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-800">
-                            {filteredMarkets.map((m) => {
+                             {filteredMarkets.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="text-center p-10 text-gray-500 border-none">
+                                        No resolved markets history.
+                                    </td>
+                                </tr>
+                             ) : (
+                                filteredMarkets.map((m) => {
                                 const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
                                 const ma = m.account;
 
@@ -193,7 +226,7 @@ export default function MarketList() {
                                         const lostUp = upAmount > 0 && !resultUp;
                                         const lostDown = downAmount > 0 && resultUp;
 
-                                        if (wonUp && wonDown) outcome = "Both Won (Impossible)"; // Should not happen in binary
+                                        if (wonUp && wonDown) outcome = "Both Won (Impossible)";
                                         else if (wonUp) outcome = "WON (UP)";
                                         else if (wonDown) outcome = "WON (DOWN)";
                                         else if (lostUp && lostDown) outcome = "LOST (Both)";
@@ -244,34 +277,13 @@ export default function MarketList() {
                                         </td>
                                     </tr>
                                 );
-                            })}
+                            })
+                            )}
                         </tbody>
                     </table>
                 </div>
-            ) : (
-                /* Grid View (Active & Positions) */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredMarkets.map((m) => {
-                        const myBet = userBets.find(b => b.account.market.toBase58() === m.publicKey.toBase58());
-                        return (
-                            <MarketCard
-                                key={m.publicKey.toString()}
-                                market={m}
-                                userBet={myBet}
-                                onRefresh={fetchData}
-                            />
-                        );
-                    })}
-                </div>
-            )}
-
-            {filteredMarkets.length === 0 && !loading && (
-                <div className="text-center p-10 text-gray-500 border border-gray-800 rounded-xl bg-black/20 mt-4">
-                    {activeTab === "active" && "No active markets right now."}
-                    {activeTab === "positions" && "You haven't placed any bets yet."}
-                    {activeTab === "history" && "No resolved markets history."}
-                </div>
-            )}
-        </div>
+            </TabsContent>
+        </Tabs>
+        </>
     );
 }

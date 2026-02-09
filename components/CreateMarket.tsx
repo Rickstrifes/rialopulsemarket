@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet, AnchorWallet } from "@jup-ag/wallet-adapter";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { getProgram } from "@/utils/anchor";
 import { USDC_MINT } from "@/utils/constants";
@@ -82,8 +82,8 @@ export default function CreateMarket() {
     };
 
     const createMarket = async () => {
-        if (!wallet.publicKey) {
-            toast.error("Please connect your wallet first.");
+        if (!wallet.publicKey || !wallet.signTransaction) {
+            toast.error("Wallet not connected or does not support signing.");
             return;
         }
         if (previewPrice === null) {
@@ -100,8 +100,7 @@ export default function CreateMarket() {
         const toastId = toast.loading("Initializing market on Solana...");
 
         try {
-            // @ts-ignore
-            const program = getProgram(connection, wallet) as any;
+            const program = getProgram(connection, wallet as AnchorWallet);
 
             const marketKeypair = anchor.web3.Keypair.generate();
 
@@ -140,11 +139,19 @@ export default function CreateMarket() {
 
             console.log("Market initialized:", tx);
             toast.success("Market initialized successfully.", { id: toastId });
-        } catch (error: any) {
-            console.error(error);
-            const msg = error.message || error.toString();
-            // Suppress overlay for common user rejections if desired, 
-            // but for now just show valid toast error.
+        } catch (error: unknown) {
+            console.error("Market creation error:", error);
+            const msg = error instanceof Error ? error.message : String(error);
+            
+            // Log full error object for debugging
+            if (typeof error === "object" && error !== null) {
+                const err = error as { logs?: string[] };
+                if (err.logs) {
+                    console.error("Error Logs:", err.logs);
+                    toast.error(`Simulation failed: ${err.logs[err.logs.length - 1]}`);
+                    return;
+                }
+            }
 
             // Check for user rejection
             if (msg.includes("User rejected")) {
@@ -158,9 +165,9 @@ export default function CreateMarket() {
     };
 
     return (
-        <Card className="glass-panel border-secondary/30">
+        <Card className="glass-panel border-border/30">
             <CardHeader>
-                <CardTitle className="text-xl font-bold text-secondary">
+                <CardTitle className="text-xl font-bold text-foreground">
                     Create Market
                 </CardTitle>
             </CardHeader>
@@ -178,12 +185,12 @@ export default function CreateMarket() {
                                 }
                             }}
                         >
-                            <SelectTrigger className="w-full bg-[#13141f] border-gray-700 text-white">
+                            <SelectTrigger className="w-full bg-input border-input text-foreground">
                                 <SelectValue placeholder="Select Pair" />
                             </SelectTrigger>
-                            <SelectContent className="bg-[#13141f] border-gray-700 text-white">
+                            <SelectContent className="bg-popover border-border text-popover-foreground">
                                 {ASSET_PAIRS.map((pair) => (
-                                    <SelectItem key={pair.id} value={pair.name} className="focus:bg-gray-800 focus:text-white cursor-pointer">
+                                    <SelectItem key={pair.id} value={pair.name} className="focus:bg-accent focus:text-accent-foreground cursor-pointer">
                                         {pair.name}
                                     </SelectItem>
                                 ))}
@@ -192,17 +199,17 @@ export default function CreateMarket() {
                     </div>
 
                     {/* Strike Price Preview Dashboard */}
-                    <div className="bg-black/40 border border-gray-800 rounded-lg p-3 flex justify-between items-center">
-                        <span className="text-sm text-gray-400">Starting Strike Price</span>
-                        <div className="text-right min-w-[120px] min-h-[3rem] flex flex-col justify-center">
+                    <div className="bg-muted/40 border border-border rounded-lg p-3 flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Starting Strike Price</span>
+                        <div className="text-right min-w-[120px] min-h-12 flex flex-col justify-center">
                             {fetchingPrice ? (
                                 <span className="text-xs text-yellow-500 animate-pulse ml-auto">Scanning...</span>
                             ) : (
                                 <div className="flex flex-col items-end">
-                                    <span className={`text-lg font-mono tabular-nums font-bold ${previewPrice ? 'text-retro-green' : 'text-gray-500'}`}>
+                                    <span className={`text-lg font-mono tabular-nums font-bold ${previewPrice ? 'text-retro-green' : 'text-muted-foreground'}`}>
                                         {formatCurrency(previewPrice)}
                                     </span>
-                                    <span className="text-[10px] text-gray-600 uppercase tracking-wider">LIVE DATA</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">LIVE DATA</span>
                                 </div>
                             )}
                         </div>
@@ -232,7 +239,7 @@ export default function CreateMarket() {
                                             : new Date(new Date().setHours(0, 0, 0, 0))
                                     }
                                     maxTime={new Date(new Date().setHours(23, 59, 59, 999))}
-                                    className="w-full bg-black/40 border border-gray-700 rounded-lg p-2 text-white focus:border-secondary outline-none font-mono cursor-pointer caret-transparent h-10 text-sm"
+                                    className="w-full bg-input border border-input rounded-lg p-2 text-foreground focus:border-ring outline-none font-mono cursor-pointer caret-transparent h-10 text-sm"
                                     wrapperClassName="w-full"
                                     placeholderText="Select Market End Time"
                                     onKeyDown={(e) => e.preventDefault()}
@@ -257,8 +264,8 @@ export default function CreateMarket() {
                                     size="sm"
                                     onClick={() => handlePreset(preset.val)}
                                     className={`h-8 text-xs border cursor-pointer ${selectedPreset === preset.val 
-                                        ? "bg-retro-green text-black border-retro-green hover:bg-retro-green/90 font-bold" 
-                                        : "bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-white"}`}
+                                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 font-bold" 
+                                        : "bg-secondary/50 text-muted-foreground border-border hover:bg-secondary hover:text-foreground"}`}
                                 >
                                     {preset.label}
                                 </Button>
@@ -266,11 +273,11 @@ export default function CreateMarket() {
                         </div>
 
                         {/* Countdown Preview */}
-                        <div className="flex justify-between items-center text-xs p-3 bg-primary/10 rounded-lg border border-primary/20">
-                            <span className="text-gray-400">Duration Breakdown:</span>
+                        <div className="flex justify-between items-center text-xs p-3 bg-secondary/10 rounded-lg border border-secondary/20">
+                            <span className="text-muted-foreground font-medium">Duration Breakdown:</span>
                             <div className="text-right">
-                                <div className="text-gray-500 mb-1">Closes in:</div>
-                                <div className={`font-mono font-bold ${selectedDate <= new Date() ? 'text-retro-red' : 'text-secondary'}`}>
+                                <div className="text-muted-foreground mb-1">Closes in:</div>
+                                <div className={`font-mono font-bold ${selectedDate <= new Date() ? 'text-retro-red' : 'text-foreground'}`}>
                                     {selectedDate <= new Date() ? "Invalid Time" : countdown}
                                 </div>
                             </div>
@@ -280,8 +287,11 @@ export default function CreateMarket() {
                     <Button
                         onClick={createMarket}
                         disabled={!wallet.publicKey || loading || !previewPrice}
-                        className="w-full font-bold mt-4 cursor-pointer"
-                        variant="secondary"
+                        className={`w-full font-bold mt-4 cursor-pointer text-lg h-12 transition-all ${
+                            !wallet.publicKey || loading || !previewPrice 
+                            ? "bg-muted text-muted-foreground cursor-not-allowed" 
+                            : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(232,227,213,0.3)] hover:shadow-[0_0_20px_rgba(232,227,213,0.5)]"
+                        }`}
                         size="lg"
                     >
                         {loading ? "Creating..." : "Initialize Market"}

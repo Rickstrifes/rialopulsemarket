@@ -1,8 +1,8 @@
 "use client";
 
 import { FC, ReactNode, useMemo } from "react";
-import { ConnectionProvider } from "@solana/wallet-adapter-react";
-import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import { ConnectionProvider } from "@jup-ag/wallet-adapter";
+
 import { UnifiedWalletProvider } from "@jup-ag/wallet-adapter";
 import { HELIUS_RPC_URL } from "@/utils/constants";
 
@@ -10,18 +10,12 @@ export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children })
     // You can also provide a custom RPC endpoint.
     const endpoint = useMemo(() => HELIUS_RPC_URL, []);
 
-    const wallets = useMemo(
-        () => [
-            new PhantomWalletAdapter(),
-            new SolflareWalletAdapter(),
-        ],
-        []
-    );
+
 
     return (
         <ConnectionProvider endpoint={endpoint}>
             <UnifiedWalletProvider
-                wallets={wallets}
+                wallets={[]}
                 config={{
                     autoConnect: true,
                     env: 'devnet',

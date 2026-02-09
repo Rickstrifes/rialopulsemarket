@@ -1,10 +1,8 @@
 "use client";
 
-import { UnifiedWalletButton } from "@jup-ag/wallet-adapter";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { UnifiedWalletButton, useConnection, useWallet } from "@jup-ag/wallet-adapter";
 import { useEffect, useState } from "react";
-import LivePriceTicker from "./LivePriceTicker";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+
 import { USDC_MINT } from "@/utils/constants";
 import { getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
 import { formatCurrency } from "@/utils/formatting";
@@ -17,12 +15,12 @@ export default function Navbar() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        const timer = setTimeout(() => setMounted(true), 0);
+        return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {
         if (!publicKey) {
-            setBalance(null);
             return;
         }
 
@@ -50,19 +48,15 @@ export default function Navbar() {
     return (
         <>
         
-        <nav className="flex justify-between items-center p-4 border-b border-primary/20 backdrop-blur-md sticky top-0 z-50 bg-black/20 h-20">
+        <nav className="flex justify-between items-center p-4 border-b border-border backdrop-blur-md sticky top-0 z-50 bg-background/80 text-foreground">
             <div className="flex items-center gap-4 w-1/3">
-                <div className="text-2xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent neon-text shrink-0">
+                <div className="text-2xl font-bold tracking-tighter text-foreground shrink-0">
                     PULSE
                 </div>
-                <div className="h-8 w-[1px] bg-white/10 shrink-0" />
+                <div className="h-8 w-px bg-border shrink-0" />
             </div>
 
             {/* Center: Tagline */}
-           <div className="max-w-5xl my-2 mx-auto px-4">
-            <LivePriceTicker />
-        </div>
-
             <div className="flex items-center space-x-4">
                 <div className="hidden md:block">
                     <Faucet />
@@ -70,7 +64,7 @@ export default function Navbar() {
                 {publicKey && (
                     <div className="hidden md:flex flex-col items-end text-sm">
                         <span className="text-gray-400 text-[10px] uppercase">Balance</span>
-                        <span className="font-mono font-bold text-secondary">
+                        <span className="font-mono font-bold text-foreground">
                             {balance !== null ? `${formatCurrency(balance)}` : "Loading..."}
                         </span>
                     </div>

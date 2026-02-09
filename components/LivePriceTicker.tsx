@@ -17,7 +17,7 @@ export default function LivePriceTicker() {
 
             if (data && data.parsed && data.parsed.length > 0) {
                 const newPrices: Record<string, number> = {};
-                data.parsed.forEach((item: any) => {
+                data.parsed.forEach((item: { price: { price: string; expo: number }; id: string }) => {
                     const priceData = item.price;
                     const val = parseFloat(priceData.price) * Math.pow(10, priceData.expo);
 
@@ -49,8 +49,8 @@ export default function LivePriceTicker() {
     return (
         <div className="md:w-full overflow-hidden relative border rounded-lg border-white/10 backdrop-blur-md p-2 flex items-center">
             {/* Gradient Masks */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/80 to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/80 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-linear-to-r from-black/80 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-linear-to-l from-black/80 to-transparent z-10 pointer-events-none"></div>
 
             <div className="flex items-center space-x-6 animate-marquee whitespace-nowrap">
                 {/* Duplicating array to ensure smooth seamless loop */}
