@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { UnifiedWalletButton, useConnection, useWallet } from "@jup-ag/wallet-adapter";
 import { useEffect, useState } from "react";
 
@@ -54,12 +56,17 @@ export default function Navbar() {
         <>
         
         <nav className="flex justify-between items-center p-4 border-b border-border backdrop-blur-md sticky top-0 z-50 bg-background/80 text-foreground">
-            <div className="flex items-center gap-4 w-1/3">
-                <div className="flex items-center gap-2">
-                    <Activity className="h-8 w-8 text-primary animate-pulse" />
-                </div>
-                <div className="h-8 w-px bg-border shrink-0" />
-                <span className="text-md font-bold tracking-tighter text-primary">predict the future.</span>
+            <div className="flex items-center gap-8">
+                <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                        <Activity className="h-8 w-8 text-primary animate-pulse" />
+                    </div>
+                    <div className="h-8 w-px bg-border shrink-0" />
+                    <span className="text-md font-bold tracking-tighter text-primary">predict the future.</span>
+                </Link>
+                <Link href="/markets" className="text-sm font-medium hover:text-primary transition-colors">
+                    Markets
+                </Link>
             </div>
 
             {/* Center: Tagline */}
