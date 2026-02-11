@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function LandingHero() {
@@ -14,8 +15,10 @@ export default function LandingHero() {
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link href="/markets">
-              <Button size="lg" className="text-lg px-8 py-6 rounded-full bg-primary hover:bg-primary/90 text-background font-bold shadow-[0_0_20px_rgba(232,227,213,0.3)] hover:shadow-[0_0_30px_rgba(232,227,213,0.5)] transition-all duration-300">
-                Launch App
+              <Button size="lg" className="cursor-pointer text-lg text-primary hover:text-black px-8 py-6 rounded-full
+               bg-black border-primary hover:border-black border-3 hover:bg-primary/90 
+               font-bold shadow-[0_0_20px_rgba(232,227,213,0.3)] hover:shadow-[0_0_30px_rgba(232,227,213,0.5)] transition-all duration-300">
+                Get Started
               </Button>
             </Link>
           </div>
@@ -23,8 +26,15 @@ export default function LandingHero() {
       </div>
       
       {/* Background Elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-20 pointer-events-none">
-        <div className="absolute inset-0 bg-linear-to-r from-primary to-primary/50 rounded-full blur-[100px] animate-pulse-slow"></div>
+      <div className="absolute inset-0 -z-10 opacity-30 select-none pointer-events-none">
+        <Image
+          src="/banner.svg"
+          alt="Pulse Banner"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-background/80 via-transparent to-background/80" />
       </div>
     </div>
   );

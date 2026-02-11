@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { UnifiedWalletButton, useConnection, useWallet } from "@jup-ag/wallet-adapter";
 import { useEffect, useState } from "react";
@@ -17,6 +18,8 @@ import { Plus, Activity } from "lucide-react";
 export default function Navbar() {
     const { connection } = useConnection();
     const { publicKey } = useWallet();
+    const pathname = usePathname();
+    const isLandingPage = pathname === "/";
     const [balance, setBalance] = useState<number | null>(null);
     const [mounted, setMounted] = useState(false);
     const [createMarketOpen, setCreateMarketOpen] = useState(false);
@@ -64,43 +67,52 @@ export default function Navbar() {
                     <div className="h-8 w-px bg-border shrink-0" />
                     <span className="text-md font-bold tracking-tighter text-primary">predict the future.</span>
                 </Link>
-                <Link href="/markets" className="text-sm font-medium hover:text-primary transition-colors">
-                    Markets
-                </Link>
             </div>
 
             {/* Center: Tagline */}
             <div className="flex items-center space-x-4">
-                <div className="hidden md:block">
-                    <Faucet />
-                </div>
-                <Dialog open={createMarketOpen} onOpenChange={setCreateMarketOpen}>
-                    <DialogTrigger asChild>
+                {isLandingPage ? (
+                    <Link href="/markets">
                         <Button 
-                            variant="outline"
-                            className="bg-primary/10 hover:bg-primary hover:text-primary-foreground hover:scale-105 border-primary/50 text-primary font-bold transition-all"
+                            className="bg-primary hover:bg-primary/90 text-background font-bold shadow-[0_0_15px_rgba(232,227,213,0.3)] hover:shadow-[0_0_20px_rgba(232,227,213,0.5)] transition-all"
                         >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create Market
+                            Launch App
                         </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="text-xl font-bold">Create New Market</DialogTitle>
-                        </DialogHeader>
-                        <CreateMarket onSuccess={() => setCreateMarketOpen(false)} />
-                    </DialogContent>
-                </Dialog>
-                {publicKey && (
-                    <div className="hidden md:flex flex-col items-end text-sm">
-                        <span className="text-gray-400 text-[10px] uppercase">Balance</span>
-                        <span className="font-mono font-bold text-foreground">
-                            {balance !== null ? `${formatCurrency(balance)}` : "Loading..."}
-                        </span>
-                    </div>
-                )}
-                {mounted && (
-                    <UnifiedWalletButton />
+                    </Link>
+                ) : (
+                    <>
+                        <div className="hidden md:block">
+                            <Faucet />
+                        </div>
+                        <Dialog open={createMarketOpen} onOpenChange={setCreateMarketOpen}>
+                            <DialogTrigger asChild>
+                                <Button 
+                                    variant="outline"
+                                    className="bg-primary/10 hover:bg-primary hover:text-primary-foreground hover:scale-105 border-primary/50 text-primary font-bold transition-all"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Create Market
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-bold">Create New Market</DialogTitle>
+                                </DialogHeader>
+                                <CreateMarket onSuccess={() => setCreateMarketOpen(false)} />
+                            </DialogContent>
+                        </Dialog>
+                        {publicKey && (
+                            <div className="hidden md:flex flex-col items-end text-sm">
+                                <span className="text-gray-400 text-[10px] uppercase">Balance</span>
+                                <span className="font-mono font-bold text-foreground">
+                                    {balance !== null ? `${formatCurrency(balance)}` : "Loading..."}
+                                </span>
+                            </div>
+                        )}
+                        {mounted && (
+                            <UnifiedWalletButton />
+                        )}
+                    </>
                 )}
             </div>
         </nav>
