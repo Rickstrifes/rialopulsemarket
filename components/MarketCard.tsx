@@ -508,7 +508,7 @@ export default function MarketCard({ market, userBet, onRefresh }: MarketProps) 
                                     value={betAmount}
                                     onChange={handleBetInputChange}
                                     onKeyDown={handleBetKeyDown}
-                                    className="text-right font-mono pb-2 text-foreground placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 border-none outline-none shadow-none bg-transparent"
+                                    className="text-right font-mono pb-2 text-foreground placeholder:text-muted-foreground focus:ring-0! focus-visible:ring-0 focus-visible:ring-offset-0 border-none outline-none shadow-none bg-transparent"
                                     placeholder="Enter amount"
                                 />
                                 <InputGroupAddon align="inline-end">
