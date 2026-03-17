@@ -55,7 +55,7 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="py-4 text-center text-sm text-gray-500 border-t border-gray-800 flex flex-row justify-center items-center gap-2">
-            Social Media
+            Our Social Media
             <a
               href="https://x.com/pulsemarket0"
               target="_blank"
